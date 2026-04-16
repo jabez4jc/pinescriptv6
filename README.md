@@ -3,6 +3,22 @@
 **Current Version:** v6  
 **Source:** [TradingView Pine Script™ v6 Reference Manual](https://www.tradingview.com/pine-script-reference/v6/) & [Welcome to Pine Script® v6](https://www.tradingview.com/pine-script-docs/welcome/)
 
+## Recent Release Coverage
+The repository now explicitly surfaces the additions documented in [release_notes.md](https://github.com/jabez4jc/pinescriptv6/blob/main/release_notes.md):
+
+- `request.footprint()` and the `footprint` / `volume_row` types
+- `syminfo.isin`
+- `time()` / `time_close()` support for `timeframe_bars_back`
+- Updated line-wrapping rules for expressions enclosed in parentheses
+
+These updates are reflected in:
+
+- [reference/functions/request.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/functions/request.md)
+- [reference/functions/general.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/functions/general.md)
+- [reference/types.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/types.md)
+- [reference/variables.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/variables.md)
+- [writing_scripts/style_guide.md](https://github.com/jabez4jc/pinescriptv6/blob/main/writing_scripts/style_guide.md)
+
 ## 🤖 What is this?
 This repository contains the official Pine Script v6 documentation, restructured and "chunked" specifically for Large Language Models (LLMs).
 
