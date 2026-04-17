@@ -14,6 +14,41 @@
   * **Content:** Chronological summary of recent Pine Script v6 additions and behavior changes.
   * **Keywords:** `request.footprint`, `volume_row`, `syminfo.isin`, `timeframe_bars_back`, `line wrapping`.
 
+## 0.5. Publishing Guidelines
+
+*Use this file when the user asks about publishing, house rules, visibility types,
+formatting tags, paid scripts, or vendor requirements.*
+
+* **`writing_scripts/publishing_guidelines.md`**
+  * **Content:** House rules compliance checklists; privacy types (public/private);
+    visibility types (open/protected/invite-only); vendor requirements for paid scripts;
+    publication type decision tree; full BBCode formatting reference with usage examples
+    for every supported tag; unsupported tag list; per-section formatting patterns;
+    and LLM behaviour rules.
+  * **Keywords:** `publish`, `house rules`, `open-source`, `protected`, `invite-only`,
+    `private`, `paid script`, `vendor`, `Script Publishing Rules`, `Vendor Requirements`,
+    `Editors' picks`, `MPL 2.0`, `15 minutes`, `BBCode`, `[b]`, `[i]`, `[list]`,
+    `[pine]`, `[url]`, `[image]`, `[quote]`, `[s]`, `$SYMBOL`, `formatting`, `markup`,
+    `performance claims`, `compliance`, `description`, `release notes`.
+
+---
+### NEW ROUTING ENTRIES (add to the "## Routing Logic for LLMs" section):
+
+* **IF** user asks about publishing, visibility types, or house rules:
+  + retrieve `writing_scripts/publishing_guidelines.md`
+
+* **IF** user asks about BBCode, description formatting, or markup tags:
+  + retrieve `writing_scripts/publishing_guidelines.md` (Section 7 — Formatting Reference)
+
+* **IF** user asks whether they can charge for or sell a script:
+  + retrieve `writing_scripts/publishing_guidelines.md` (Section 4 — Vendor Requirements)
+
+* **IF** user asks about the difference between protected vs invite-only vs open-source:
+  + retrieve `writing_scripts/publishing_guidelines.md` (Section 2 — Visibility Types)
+
+* **IF** user asks how to format release notes or update an existing script:
+  + retrieve `writing_scripts/publishing_guidelines.md` (Section 6 — Publication Workflow)
+ 
 ## 1. Syntax and Core Concepts
 
 *Use these files when the user asks about language mechanics, execution flow, or type errors.*
