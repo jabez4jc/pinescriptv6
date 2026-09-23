@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// pinescript-v6 CLI: install the docs bundle globally for any agent, or run it
+// pinescript-v6 CLI: install the docs globally for any agent, or run it
 // as an MCP server.
 import { readFile, readdir, rm, cp, mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
@@ -28,17 +28,27 @@ async function installDocs() {
   return DOCS;
 }
 
-async function installClaude() {
+// The skill and agent ship without docs; point their docs-root block at the
+// shared install instead.
+async function pinnedDef(rel, docs) {
+  const src = await readFile(path.join(PKG, rel), "utf8");
+  const re = /<!-- BEGIN docs-root -->[\s\S]*?<!-- END docs-root -->/;
+  if (!re.test(src)) throw new Error(`${rel} is missing its docs-root block`);
+  return src.replace(re, `<!-- BEGIN docs-root -->\n**Docs root:** \`${docs}\`. Start at \`LLM_MANIFEST.md\` there.\n<!-- END docs-root -->`);
+}
+
+async function installClaude(docs) {
   const skill = path.join(HOME, ".claude", "skills", "pinescript-v6");
   await rm(skill, { recursive: true, force: true });
-  await cp(path.join(PKG, "skills", "pinescript-v6"), skill, { recursive: true });
+  await mkdir(skill, { recursive: true });
+  await writeFile(path.join(skill, "SKILL.md"), await pinnedDef("skills/pinescript-v6/SKILL.md", docs));
 
   const agents = path.join(HOME, ".claude", "agents");
   await mkdir(agents, { recursive: true });
-  await cp(path.join(PKG, "agents", "pinescript-developer.md"), path.join(agents, "pinescript-developer.md"));
-  await rm(path.join(agents, "pinescript-developer"), { recursive: true, force: true });
-  await cp(path.join(PKG, "agents", "pinescript-developer"), path.join(agents, "pinescript-developer"), { recursive: true });
-  return [skill, path.join(agents, "pinescript-developer.md")];
+  await rm(path.join(agents, "pinescript-developer"), { recursive: true, force: true }); // bundle from older versions
+  const agent = path.join(agents, "pinescript-developer.md");
+  await writeFile(agent, await pinnedDef("agents/pinescript-developer.md", docs));
+  return [skill, agent];
 }
 
 const POINTER = (docs) => `${BEGIN}
@@ -70,7 +80,10 @@ async function upsertBlock(file, body) {
 
 async function install() {
   const docs = await installDocs();
-  const written = [docs, ...(await installClaude())];
+  const written = [docs, ...(await installClaude(docs))];
+  // Always-on pointer: skills only fire when the model thinks it needs one, and
+  // quick signature questions otherwise get answered from stale memory.
+  written.push(await upsertBlock(path.join(HOME, ".claude", "CLAUDE.md"), POINTER(docs)));
   written.push(await upsertBlock(path.join(HOME, ".codex", "AGENTS.md"), POINTER(docs)));
   written.push(await upsertBlock(path.join(HOME, ".cursor", "rules", "pinescript-v6.md"), POINTER(docs)));
   written.push(await upsertBlock(path.join(HOME, ".config", "AGENTS.md"), POINTER(docs)));
@@ -95,14 +108,15 @@ async function uninstall() {
     path.join(HOME, ".cursor", "rules", "pinescript-v6.md"),
   ];
   for (const t of targets) await rm(t, { recursive: true, force: true });
-  for (const f of [path.join(HOME, ".codex", "AGENTS.md"), path.join(HOME, ".config", "AGENTS.md")]) {
+  // ~/.claude/CLAUDE.md: the block can land there when instructions are imported from Codex.
+  for (const f of [path.join(HOME, ".codex", "AGENTS.md"), path.join(HOME, ".config", "AGENTS.md"), path.join(HOME, ".claude", "CLAUDE.md")]) {
     if (!existsSync(f)) continue;
     const cur = await readFile(f, "utf8");
     const i = cur.indexOf(BEGIN);
     const j = cur.indexOf(END);
     if (i !== -1 && j !== -1) await writeFile(f, (cur.slice(0, i) + cur.slice(j + END.length)).trim() + "\n");
   }
-  console.log("Removed pinescript-v6 from ~/.pinescript-v6, ~/.claude, ~/.cursor, ~/.codex.");
+  console.log("Removed pinescript-v6 from ~/.pinescript-v6, ~/.claude (incl. CLAUDE.md block), ~/.cursor, ~/.codex, ~/.config/AGENTS.md.");
 }
 
 // --- MCP server -------------------------------------------------------------
@@ -128,7 +142,7 @@ async function mcp() {
   const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
   const { z } = await import("zod");
 
-  const server = new McpServer({ name: "pinescript-v6", version: "1.0.0" });
+  const server = new McpServer({ name: "pinescript-v6", version: "1.1.0" });
   const text = (s) => ({ content: [{ type: "text", text: s }] });
 
   server.registerTool(

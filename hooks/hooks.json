@@ -1,0 +1,17 @@
+{
+  "description": "Remind Claude to use the Pine Script v6 docs instead of memory",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat \"${CLAUDE_PLUGIN_ROOT}/hooks/session-start.md\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

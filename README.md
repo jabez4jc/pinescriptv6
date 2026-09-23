@@ -107,8 +107,11 @@ If you use AI-native editors like Cursor or Windsurf:
 ## 📂 Repository Structure
 
 * **[.claude-plugin/](https://github.com/jabez4jc/pinescriptv6/tree/main/.claude-plugin)**: `plugin.json` + `marketplace.json` — makes this repo installable as a Claude Code plugin (Option 2 above).
-* **[skills/pinescript-v6/](https://github.com/jabez4jc/pinescriptv6/tree/main/skills/pinescript-v6)**: The Claude Code skill that routes Pine Script requests to the right reference file. Self-contained — bundles its own copy of the docs so it works if copied out on its own.
-* **[agents/pinescript-developer.md](https://github.com/jabez4jc/pinescriptv6/blob/main/agents/pinescript-developer.md)** + **[agents/pinescript-developer/](https://github.com/jabez4jc/pinescriptv6/tree/main/agents/pinescript-developer)**: The `pinescript-developer` subagent definition and its bundled reference copy — also self-contained; copy both together.
+* **[skills/pinescript-v6/SKILL.md](https://github.com/jabez4jc/pinescriptv6/blob/main/skills/pinescript-v6/SKILL.md)**: The Claude Code skill that routes Pine Script requests to the right doc file.
+* **[agents/pinescript-developer.md](https://github.com/jabez4jc/pinescriptv6/blob/main/agents/pinescript-developer.md)**: The `pinescript-developer` subagent.
+* **[hooks/](https://github.com/jabez4jc/pinescriptv6/blob/main/hooks/hooks.json)**: A plugin `SessionStart` hook that tells Claude to use the skill for any Pine Script question. Without it, quick questions like "arguments of ta.rsi" get answered from stale memory because the skill never fires. The `npx` installer adds the same pointer to `~/.claude/CLAUDE.md`.
+
+The docs exist once, at the repo root. The skill and agent read them from there when installed as a plugin, or from `~/.pinescript-v6` when installed with `npx pinescript-v6 install` (the installer rewrites their "docs root" line). To use the skill elsewhere, run the installer rather than copying the skill folder.
 * **[bin/cli.mjs](https://github.com/jabez4jc/pinescriptv6/blob/main/bin/cli.mjs)**: The `npx pinescript-v6` CLI — global installer (`install` / `uninstall`) and MCP server (`mcp`).
 * **[LLM_MANIFEST.md](https://github.com/jabez4jc/pinescriptv6/blob/main/LLM_MANIFEST.md)**: The master index. Start here.
 * **[reference/](https://github.com/jabez4jc/pinescriptv6/tree/main/reference)**: Reference Manual, one file per namespace (`ta.md`, `strategy.md`, `request.md`, `array.md`, `str.md`, ...), plus `plot.md`, `time.md`, `bar_variables.md`, `core.md` for unnamespaced built-ins, `constants.md`, `types.md`, `keywords.md`, `operators.md`, `annotations.md`, and `INDEX.md`.
@@ -136,17 +139,11 @@ If you are building a Custom GPT or setting up a Project, use this prompt:
 
 All docs are generated from TradingView's official sites; don't hand-edit them (except the two hand-maintained extras above).
 
-1. Refresh from TradingView: `npm run sync-docs`. This runs `scripts/sync-official-docs.mjs` (fetches the User Manual and Reference Manual, rewrites the docs, manifest and index, and removes pages TradingView deleted), then `scripts/sync-bundles.sh`.
-2. Review the diff and commit.
+1. Refresh from TradingView: `npm run sync-docs`. This runs `scripts/sync-official-docs.mjs`, which fetches the User Manual and Reference Manual, rewrites the docs, manifest and index, and removes pages TradingView deleted.
+2. Run `npm test`. It exercises install/uninstall against a throwaway `HOME`, does an MCP handshake, and checks that every manifest entry and internal link resolves. CI runs the same test.
+3. Review the diff and commit.
 
-The copies inside `skills/pinescript-v6/` and `agents/pinescript-developer/` are generated from the root docs by `sync-bundles.sh`. To keep them from drifting, enable the pre-commit hook once per clone:
-```
-git config core.hooksPath .githooks
-```
-As a backstop, [`.github/workflows/verify-bundle-sync.yml`](https://github.com/jabez4jc/pinescriptv6/blob/main/.github/workflows/verify-bundle-sync.yml) fails CI if any bundle is out of sync.
-
-Run `npm test` after changes. It exercises install/uninstall against a throwaway `HOME`, does an MCP handshake, and checks that every manifest entry and internal link resolves.
-Publishing a new npm version runs `sync-bundles.sh` automatically via `prepack`:
+Publishing a new npm version:
 ```
 npm version patch && npm publish
 ```

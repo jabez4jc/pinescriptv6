@@ -1,15 +1,14 @@
 {
   "name": "pinescript-v6",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Chunked TradingView Pine Script v6 reference for LLM agents, plus a global installer and an MCP server.",
   "type": "module",
   "bin": {
     "pinescript-v6": "bin/cli.mjs"
   },
   "scripts": {
-    "prepack": "./scripts/sync-bundles.sh",
     "test": "./tests/test-cli.sh",
-    "sync-docs": "node scripts/sync-official-docs.mjs && ./scripts/sync-bundles.sh"
+    "sync-docs": "node scripts/sync-official-docs.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
