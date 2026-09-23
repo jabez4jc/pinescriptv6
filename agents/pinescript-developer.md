@@ -32,8 +32,10 @@ All paths below are relative to that bundled directory, not the repo root.
 ## Key files
 
 - `MANIFEST.md` — master routing index (read this first, always)
-- `release_notes.md` — v6-specific additions (`request.footprint`,
-  `syminfo.isin`, `timeframe_bars_back`, line-wrapping rules)
+- `release_notes.md` — v6-specific additions (`once`,
+  `calc_on_every_history_tick` and the new strategy settings UI, UDT
+  `sort_field`, multiline strings, `request.footprint`, `syminfo.isin`,
+  `timeframe_bars_back`, line-wrapping rules)
 - `concepts/execution_model.md` + `pine_script_execution_model.md` — bar-by-bar
   execution, `var`/`varip`, historical vs. realtime — consult this for any
   "why does my variable behave oddly" question

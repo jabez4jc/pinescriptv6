@@ -406,6 +406,8 @@ Keyword used to explicitly declare the "string" type of a variable or a paramete
 ### Remarks
 Explicitly mentioning the type in a variable declaration is optional, except when it is initialized with na. Learn more about Pine Script® types in the User Manual page on the Type System.
 
+Since April 2026, string literals can also span multiple lines using triple delimiters (`"""..."""` or `'''...'''`). Every character between the delimiters is literal: each code line becomes a text line joined by a newline (no `\n` needed), and all leading indentation is kept, regardless of the enclosing block's indentation. Multiline literals can be used anywhere a single-line string can, including as operands in wrapped concatenations. See the [Multiline strings](https://www.tradingview.com/pine-script-docs/concepts/strings/) section of the Strings page.
+
 ### Code Example
 ```pine
 //@version=6
@@ -413,6 +415,11 @@ indicator("string")
 string s = "Hello World!"    // Same as `s = "Hello world!"`
 // string s = na // same as "" 
 plot(na, title=s)
+// Multiline string: the newline and the four-space indent on line 2 are part of the value.
+string m = """Line 1
+    Line 2, indented"""
+if barstate.isfirst
+    log.info(m)
 ```
 
 ---

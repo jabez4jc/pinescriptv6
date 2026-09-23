@@ -2,6 +2,132 @@
 
 ## 2026
 
+### [August 2026](https://www.tradingview.com/pine-script-docs/release-notes/#august-2026)
+
+#### Pine Screener improvements
+
+The [Pine Screener](https://www.tradingview.com/pine-screener/) can now scan the symbols of any **index** without first building a watchlist: select the "Index" tab in the "Symbol source" dropdown to scan up to 4,000 of the index's symbols. Previously, it could scan only watchlist symbols and use only indicators from the user's "Favorites" list.
+
+The "Add indicator" button now opens the full "Indicators" dialog box, so personal, invite-only, purchased, built-in, and community scripts can all be used with the screener. The screener still supports only *indicator* scripts that contain at least one `plot*()` or `alertcondition()` call; incompatible scripts are grayed out in the dialog box.
+
+#### `once` conditional structure
+
+The new [once](https://www.tradingview.com/pine-script-reference/v6/#kw_once) keyword defines a conditional structure that executes its local block when its condition is `true`. After the block executes on a **closed** bar, it never executes again on any later bar, regardless of the condition.
+
+```pine
+once [<condition>]
+    <statements>
+```
+
+- `<condition>` is optional (default `true`) and accepts a "series bool" value.
+- The block must be indented by four spaces or a tab.
+- Unlike `if` and `switch`, a `once` structure **does not return a usable value**. Assigning a `once` statement (or a call to a function that ends with one) to a variable or tuple causes a compilation error. Reassign variables *inside* the block instead.
+
+```pine
+//@version=6
+indicator("`once` simple demo", overlay = true)
+
+mySMA = ta.sma(close, 20)
+
+// The first time price closes above the SMA, print a label.
+// Equivalent to `if close > mySMA and not printed` plus a `var bool printed` flag, but shorter and faster.
+once close > mySMA
+    label.new(bar_index, mySMA, "First close above the SMA", style = label.style_label_down)
+
+plot(mySMA)
+```
+
+**Realtime bars:** on an open realtime bar, a `once` structure that has not yet fired is evaluated on every tick. If it fires on a non-closing tick, rollback resets its state on the next tick, so it can fire *multiple times* within one realtime bar. It becomes permanently inactive only after executing on a bar's closing tick. This matters for code that rollback does not reset (`varip` variables, `log.*()` calls, strategy order commands, `alert()` calls). To guarantee a single execution, append `and barstate.isconfirmed` to the condition.
+
+```pine
+//@version=6
+indicator("`once` upon a realtime bar")
+
+varip int realTimeCount    = 0
+varip int closingTickCount = 0
+
+if barstate.isrealtime
+    // Fires on every tick of the first realtime bar (rollback resets the structure until the bar closes).
+    once
+        realTimeCount += 1
+    // Fires only on the closing tick of the first realtime bar.
+    once barstate.isconfirmed
+        closingTickCount += 1
+
+plot(realTimeCount,    "Once per realtime tick")
+plot(closingTickCount, "Once per realtime bar", color.red)
+```
+
+See the [`once` structure](https://www.tradingview.com/pine-script-docs/language/conditional-structures/#once-structure) section of the Conditional structures page to learn more.
+
+#### Binary search in UDT arrays
+
+[array.binary_search()](https://www.tradingview.com/pine-script-reference/v6/#fun_array.binary_search), [array.binary_search_leftmost()](https://www.tradingview.com/pine-script-reference/v6/#fun_array.binary_search_leftmost), and [array.binary_search_rightmost()](https://www.tradingview.com/pine-script-reference/v6/#fun_array.binary_search_rightmost) can now search arrays that store IDs of user-defined types (UDTs). Like the [UDT sorting functions](#sorting-udt-collections), they include a `sort_field` parameter that specifies which object field the search compares. It accepts a "const int" field index (default `0`, the first field in the type declaration) or a "const string" field name.
+
+The array must already be sorted **in ascending order by the same field** (e.g., `array.sort(arr, order.ascending, sort_field)`) for the search to return correct results.
+
+### [July 2026](https://www.tradingview.com/pine-script-docs/release-notes/#july-2026)
+
+#### Strategy improvements
+
+The [strategy()](https://www.tradingview.com/pine-script-reference/v6/#fun_strategy) declaration statement has a new `calc_on_every_history_tick` parameter. It requires a **named** argument (e.g., `calc_on_every_history_tick = true`). When `true`, the script executes once for **each available tick in every historical bar**. During those executions, `high`, `low`, `close`, `volume`, and values derived from them (e.g., `ohlc4`) update on each tick to approximate the data that was available while the bar was developing. This allows more granular calculations and order fills across history and reduces lookahead bias. The default is `false`.
+
+- Available only on standard chart types and only for Premium and Ultimate plans. If enabled by default and incompatible with the user's plan or chart, the strategy raises a runtime error.
+- It does **not** change bar-state variables: `barstate.isconfirmed` is always `true` on historical bars, including during intrabar history ticks.
+- The ticks available depend on the "Bar detalization" setting: with high detail, per-tick values come from lower-timeframe data; otherwise they follow the broker emulator's assumed intrabar path (O→H→L→C or O→L→H→C, with `volume` accumulating in quarters).
+- Like `calc_on_every_tick` and `calc_on_order_fills`, it can cause repainting, and it affects `varip`, logs, alerts, and order commands.
+
+```pine
+//@version=6
+strategy("Executions on all historical ticks demo", overlay = true,
+     default_qty_type = strategy.percent_of_equity, default_qty_value = 2,
+     calc_on_every_history_tick = true)
+
+varip int   openTime   = 0
+varip float firstPrice = na
+
+// Runs once per bar: on the first tick of each bar, record that tick's price.
+if time != openTime
+    openTime   := time
+    firstPrice := close
+
+float highest = ta.highest(high, 10)
+float lowest  = ta.lowest(low, 10)
+
+// Can only be `true` on historical bars when per-tick history execution is active,
+// because otherwise `close` and `firstPrice` are the same value.
+if close < firstPrice and close != highest and close != lowest and strategy.position_size == 0
+    strategy.entry("Long", strategy.long)
+    strategy.exit("Exit", "Long", limit = highest, stop = lowest)
+```
+
+The "Settings/Properties" tab and the strategy report (formerly the **Strategy Tester**) also changed. Each `strategy()` parameter still sets the *default* for its new UI control:
+
+| Old UI | New UI | Default set by |
+|---|---|---|
+| "On every tick" / "After order is filled" checkboxes | **Script execution** menu ("On realtime bar tick", "On order fill", "On history bar tick") | `calc_on_every_tick`, `calc_on_order_fills`, `calc_on_every_history_tick` |
+| "Using bar magnifier" checkbox (Bar Magnifier) | **Bar detalization** menu ("High" = old bar magnifier on) | `use_bar_magnifier` |
+| "Fill orders using standard OHLC" checkbox | **Heikin Ashi mode** dropdown (shown only on Heikin Ashi charts) | `fill_orders_on_standard_ohlc` |
+| "Verify price for limit orders" input | **Limit order execution** dropdown (fixed options) | `backtest_fill_limits_assumption` |
+| Checkbox for filling orders on the bar's closing tick | **Order execution delay** input ("None" = fill on close) | `process_orders_on_close` |
+| "Margin for long/short positions" (%) | **Long leverage** / **Short leverage** inputs | `margin_long`, `margin_short` (still percentages; converted to leverage for display) |
+
+See the [Altering calculation behavior](https://www.tradingview.com/pine-script-docs/concepts/strategies/#altering-calculation-behavior), [Adjusting historical bar detail](https://www.tradingview.com/pine-script-docs/concepts/strategies/#adjusting-historical-bar-detail), and [Margin and leverage](https://www.tradingview.com/pine-script-docs/concepts/strategies/#margin-and-leverage) sections of the Strategies page.
+
+#### Automatic parentheses
+
+When you press Enter to break a single-line expression in the Pine Editor, the editor now automatically wraps the entire expression in parentheses, so the wrapped code compiles without manually adding indentation or parentheses. This builds on the [December 2025 line-wrapping rules](#updated-line-wrapping).
+
+```pine
+//@version=6
+indicator("Auto parentheses demo")
+
+// Pressing Enter anywhere after `=` makes the editor enclose the whole expression in `( ... )`.
+float someValue = time > chart.left_visible_bar_time and last_bar_time <= chart.right_visible_bar_time ? close > open ? high : low : na
+
+plot(someValue)
+```
+
 ### [April  2026](https://www.tradingview.com/pine-script-docs/release-notes/#april-2026)
 
 #### Multiline  strings
@@ -69,10 +195,10 @@ if barstate.isfirst
 ```
 See the Multiline strings section of the Strings page to learn more about multiline strings and how they differ from single-line strings.
 
-### Updated editor settings
+#### Updated editor settings
 The Pine Editor’s settings include a new “Use word wrap by default” checkbox. If selected, the Pine Editor automatically applies word wrapping when the user creates a new script, opens an existing script, or reopens the editor. The user can deactivate or reactivate word wrap for the current editor session at any time by using the  `Alt + Z`/`Option + Z`  hotkey  or the “Toggle Word Wrap” option in the command palette.
 
-### Sorting UDT collections
+#### Sorting UDT collections
 The array.sort(), array.sort_indices(), and matrix.sort() functions can now sort arrays and matrices that store IDs of user-defined types (UDTs). These functions sort UDT collections by comparing values from one of the “int”, “float”, or “string” fields in the objects referenced by their elements.
 
 The new `sort_field` _parameter_  specifies  _which_  object field a call to these functions compares to sort a UDT collection. It accepts either a  _“const int”_  or  _“const string”_  argument:

@@ -300,6 +300,32 @@ Boolean value, or series of boolean values.
 
 ---
 
+## once
+
+Defines a conditional structure that executes its local block when its condition is `true`, then never executes again after the block has run on a closed bar. The condition is optional and defaults to `true`. Unlike `if` and `switch`, a `once` structure does not return a usable value, so it cannot be assigned to a variable or tuple. Added in August 2026.
+
+### Syntax
+```
+once [<condition>]
+    <statements>
+```
+
+### Remarks
+On an open realtime bar, a `once` block that fires on a non-closing tick is reset by rollback and can fire again on later ticks of the same bar. It becomes permanently inactive only after executing on a closing tick. Append `and barstate.isconfirmed` to the condition when the block contains code that rollback does not reset (`varip` updates, `log.*()`, `alert()`, strategy order commands).
+
+### Code Example
+```pine
+//@version=6
+indicator("once", overlay = true)
+mySMA = ta.sma(close, 20)
+// Label only the first close above the SMA. Replaces the `var bool fired` flag pattern.
+once close > mySMA and barstate.isconfirmed
+    label.new(bar_index, mySMA, "First close above SMA", style = label.style_label_down)
+plot(mySMA)
+```
+
+---
+
 ## or
 
 Logical OR. Applicable to boolean expressions.

@@ -6,6 +6,12 @@
 ## Recent Release Coverage
 The repository now explicitly surfaces the additions documented in [release_notes.md](https://github.com/jabez4jc/pinescriptv6/blob/main/release_notes.md):
 
+- The `once` conditional structure (August 2026)
+- `array.binary_search*()` on arrays of user-defined types via `sort_field` (August 2026)
+- Pine Screener index symbol sources and full indicator selection (August 2026)
+- `strategy()`'s `calc_on_every_history_tick` parameter and the redesigned strategy settings (Script execution, Bar detalization, leverage, Heikin Ashi mode, Limit order execution, Order execution delay) (July 2026)
+- Automatic parentheses when wrapping expressions in the Pine Editor (July 2026)
+- Multiline strings (`"""..."""`) and sorting UDT arrays/matrices with `sort_field` (April 2026)
 - `request.footprint()` and the `footprint` / `volume_row` types
 - `syminfo.isin`
 - `time()` / `time_close()` support for `timeframe_bars_back`
@@ -18,6 +24,10 @@ These updates are reflected in:
 - [reference/types.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/types.md)
 - [reference/variables.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/variables.md)
 - [writing_scripts/style_guide.md](https://github.com/jabez4jc/pinescriptv6/blob/main/writing_scripts/style_guide.md)
+- [reference/keywords.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/keywords.md)
+- [reference/functions/strategy.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/functions/strategy.md)
+- [reference/functions/collections.md](https://github.com/jabez4jc/pinescriptv6/blob/main/reference/functions/collections.md)
+- [concepts/execution_model.md](https://github.com/jabez4jc/pinescriptv6/blob/main/concepts/execution_model.md)
 
 ## 🤖 What is this?
 This repository contains the official Pine Script v6 documentation, restructured and "chunked" specifically for Large Language Models (LLMs).

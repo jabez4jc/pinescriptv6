@@ -12,7 +12,7 @@
 
 * **`release_notes.md`**
   * **Content:** Chronological summary of recent Pine Script v6 additions and behavior changes.
-  * **Keywords:** `request.footprint`, `volume_row`, `syminfo.isin`, `timeframe_bars_back`, `line wrapping`.
+  * **Keywords:** `once`, `calc_on_every_history_tick`, Script execution, Bar detalization, leverage, Heikin Ashi mode, Limit order execution, Pine Screener, automatic parentheses, `sort_field`, `array.binary_search` on UDTs, multiline strings (`"""`), `request.footprint`, `volume_row`, `syminfo.isin`, `timeframe_bars_back`, `line wrapping`.
 
 ## 0.5. Publishing Guidelines
 
@@ -83,11 +83,11 @@ formatting tags, paid scripts, or vendor requirements.*
 
 * **`reference/types.md`**
   * **Content:** Data type definitions and type-casting functions.
-  * **Keywords:** `int`, `float`, `bool`, `color`, `string`, `line`, `label`, `box`, `footprint`, `volume_row`, `simple`, `series`, `input`.
+  * **Keywords:** `int`, `float`, `bool`, `color`, `string`, multiline strings (`"""..."""`), `line`, `label`, `box`, `footprint`, `volume_row`, `simple`, `series`, `input`.
 
 * **`reference/keywords.md`**
   * **Content:** Language keywords and control structures.
-  * **Keywords:** `if`, `else`, `switch`, `for`, `while`, `export`, `import`, `method`.
+  * **Keywords:** `if`, `else`, `switch`, `once`, `for`, `while`, `export`, `import`, `method`.
 
 ## 3. Function Reference (By Namespace)
 
@@ -99,7 +99,7 @@ formatting tags, paid scripts, or vendor requirements.*
 
 * **`reference/functions/strategy.md` (Backtesting)**
   * **Content:** Strategy testing engine, orders, and trade management.
-  * **Keywords:** `strategy.entry`, `strategy.close`, `strategy.exit`, `strategy.position_size`, `strategy.equity`, `strategy.risk`.
+  * **Keywords:** `strategy()` parameters, `calc_on_every_history_tick`, `calc_on_every_tick`, `calc_on_order_fills`, `use_bar_magnifier`, `process_orders_on_close`, `margin_long`, `margin_short`, `strategy.entry`, `strategy.close`, `strategy.exit`, `strategy.position_size`, `strategy.equity`, `strategy.risk`.
 
 * **`reference/functions/request.md` (External Data)**
   * **Content:** Requesting data from other symbols, financial data, or seeds.
@@ -107,18 +107,18 @@ formatting tags, paid scripts, or vendor requirements.*
 
 * **`reference/functions/drawing.md` (Visuals)**
   * **Content:** Plotting data on the chart and drawing geometric shapes.
-  * **Keywords:** `plot`, `plotshape`, `plotchar`, `line.new`, `box.new`, `label.new`, `polyline.new`, `fill`.
+  * **Keywords:** `plot`, `plotshape`, `plotchar`, `plotcandle`, `hline`, `bgcolor`, `barcolor`, `line.*`, `box.*`, `label.*`, `linefill.*`, `polyline.new`, `table.*`, `chart.point.*`, `fill`.
 
 * **`reference/functions/collections.md` (Arrays, Maps, Matrices)**
   * **Content:** Advanced data structures for complex logic.
-  * **Keywords:** `array.new`, `array.push`, `matrix.new`, `matrix.mult`, `map.new`, `map.put`.
+  * **Keywords:** `sort_field`, `array.sort`, `array.sort_indices`, `matrix.sort`, `array.binary_search`, UDT sorting, `array.new`, `array.push`, `matrix.new`, `matrix.mult`, `map.new`, `map.put`.
 
 * **`reference/functions/general.md` (Math, Strings, Inputs)**
   * **Content:** Core built-ins and general-purpose functions, including `time()` / `time_close()` behavior updates.
   * **Keywords:** `time`, `time_close`, `bars_back`, `timeframe_bars_back`, `math.abs`, `math.round`, `str.tostring`, `str.format`, `input.int`, `input.bool`, `alert()`.
 
 * **`writing_scripts/style_guide.md`**
-  * **Content:** Formatting conventions, including the updated line-wrapping rules for wrapped expressions in parentheses.
+  * **Content:** Formatting conventions, including the updated line-wrapping rules for wrapped expressions in parentheses, the editor's automatic parentheses, and multiline strings.
   * **Keywords:** `style guide`, `line wrapping`, `parentheses`, `indentation`.
 
 ## 🧭 Routing Logic for LLMs
@@ -153,3 +153,23 @@ formatting tags, paid scripts, or vendor requirements.*
 
 * **IF** user asks about multiline formatting or indentation rules:
   * retrieve `writing_scripts/style_guide.md`
+
+* **IF** user asks about the `once` keyword or "run this block only the first time":
+  * retrieve `release_notes.md` (August 2026)
+  * retrieve `reference/keywords.md`
+
+* **IF** user asks about `calc_on_every_history_tick`, per-tick historical execution, Bar detalization / bar magnifier, leverage vs. margin, or the strategy report / Properties tab:
+  * retrieve `release_notes.md` (July 2026)
+  * retrieve `reference/functions/strategy.md`
+  * retrieve `concepts/execution_model.md`
+
+* **IF** user asks about sorting or binary-searching arrays/matrices of UDT objects (`sort_field`):
+  * retrieve `release_notes.md` (April and August 2026)
+  * retrieve `reference/functions/collections.md`
+
+* **IF** user asks about multiline strings (`"""..."""` / `'''...'''`):
+  * retrieve `release_notes.md` (April 2026)
+  * retrieve `reference/types.md`
+
+* **IF** user asks about the Pine Screener (index symbol sources, indicator selection):
+  * retrieve `release_notes.md` (August 2026)

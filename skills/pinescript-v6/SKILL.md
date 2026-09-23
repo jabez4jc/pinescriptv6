@@ -33,7 +33,7 @@ All paths below are relative to this skill's own directory.
 | Need | File(s) |
 |---|---|
 | Master index / routing table | `MANIFEST.md` |
-| Recent v6 additions (`request.footprint`, `syminfo.isin`, `timeframe_bars_back`, line-wrapping) | `release_notes.md` |
+| Recent v6 additions (`once`, `calc_on_every_history_tick`, UDT `sort_field`, multiline strings, `request.footprint`, `syminfo.isin`, `timeframe_bars_back`, line-wrapping) | `release_notes.md` |
 | Bar-by-bar execution, `var`/`varip`, historical vs realtime | `concepts/execution_model.md`, `pine_script_execution_model.md` |
 | Multi-timeframe data, repainting | `concepts/timeframes.md` |
 | Colors, gradients, transparency | `concepts/colors_and_display.md` |
@@ -42,14 +42,14 @@ All paths below are relative to this skill's own directory.
 | Built-in variables (`open`, `close`, `syminfo.*`, `bar_index`) | `reference/variables.md` |
 | Constants (`color.red`, `shape.triangle`, `size.small`) | `reference/constants.md` |
 | Types & casting (`int`, `float`, `line`, `box`, `footprint`, `volume_row`) | `reference/types.md` |
-| Keywords/control structures (`if`, `switch`, `for`, `method`, `export`/`import`) | `reference/keywords.md` |
+| Keywords/control structures (`if`, `switch`, `once`, `for`, `method`, `export`/`import`) | `reference/keywords.md` |
 | Operators | `reference/operators.md` |
 | Annotations (`//@version`, `//@strategy_alert_message`, etc.) | `reference/annotations.md` |
 | `ta.*` — indicators/signals | `reference/functions/ta.md` |
-| `strategy.*` — backtesting, orders, exits | `reference/functions/strategy.md` |
+| `strategy()` execution/backtest parameters, `strategy.*` — backtesting, orders, exits | `reference/functions/strategy.md` |
 | `request.*` — security/financial/footprint/seed data | `reference/functions/request.md` |
 | Drawing (`plot`, `plotshape`, `line.new`, `box.new`, `label.new`, `polyline.new`, `fill`) | `reference/functions/drawing.md` |
-| Arrays/matrices/maps | `reference/functions/collections.md` |
+| Arrays/matrices/maps, UDT sorting/search (`sort_field`) | `reference/functions/collections.md` |
 | Math/strings/inputs/`alert()` | `reference/functions/general.md` |
 | Visual cookbook — plots, bar coloring/plotting, tables, lines/boxes, fills, backgrounds, text/shapes, levels | `visuals/*.md` (`visuals/overview.md` first) |
 | Style guide (formatting, indentation, line-wrapping) | `writing_scripts/style_guide.md` |
@@ -71,6 +71,8 @@ for any drawing/plotting/visual-styling question.
 - "Why does my variable reset every bar?" → `concepts/execution_model.md` (`var`).
 - Anything about `request.footprint`, `footprint`, `volume_row` → `release_notes.md`
   + `reference/functions/request.md` + `reference/types.md`.
+- `once`, `calc_on_every_history_tick`, Bar detalization, leverage, `sort_field`,
+  multiline strings → `release_notes.md` first, then the matching reference file.
 - Publishing / house rules / BBCode / paid scripts → `writing_scripts/publishing_guidelines.md`.
 
 ## Output conventions

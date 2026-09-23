@@ -244,6 +244,8 @@ plot(
 )  
 `
 
+Since July 2026, the Pine Editor adds these parentheses automatically: pressing Enter to break a single-line expression encloses the whole expression in `( ... )`, so the wrapped lines compile without manual indentation fixes. Multiline string literals (`"""..."""`) are another way to split long text across lines; unlike wrapped code, their indentation becomes part of the string's value.
+
 It is possible to mix several wrapping styles in the same script, but keeping a consistent approach within the same file usually makes the code easier to scan and maintain.
 
 ## [Vertical  alignment](https://www.tradingview.com/pine-script-docs/writing/style-guide/#vertical-alignment)
