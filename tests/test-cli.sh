@@ -33,4 +33,6 @@ OUT=$({ printf '%s\n' \
 grep -q pinescript_search <<< "$OUT" || { echo "FAIL: mcp tools/list"; exit 1; }
 grep -q "outside docs root" <<< "$OUT" || { echo "FAIL: path traversal not blocked"; exit 1; }
 
+node tests/check-docs.mjs
+
 echo "PASS"

@@ -12,12 +12,8 @@ const HOME = homedir();
 const BEGIN = "<!-- BEGIN pinescript-v6 -->";
 const END = "<!-- END pinescript-v6 -->";
 
-const DOC_DIRS = ["concepts", "reference", "visuals", "writing_scripts"];
-const DOC_FILES = [
-  "LLM_MANIFEST.md",
-  "release_notes.md",
-  "pine_script_execution_model.md",
-];
+const DOC_DIRS = ["concepts", "language", "reference", "visuals", "writing_scripts", "faq", "errors", "migration_guides", "primer"];
+const DOC_FILES = ["LLM_MANIFEST.md", "release_notes.md"];
 
 // Where the shared copy of the docs lives once installed. Everything else
 // (skill, agent, rules) points at this.
@@ -148,7 +144,7 @@ async function mcp() {
   server.registerTool(
     "pinescript_doc",
     {
-      description: "Read one Pine Script v6 reference file by its manifest-relative path, e.g. 'reference/functions/ta.md'.",
+      description: "Read one Pine Script v6 reference file by its manifest-relative path, e.g. 'reference/ta.md' or 'language/execution_model.md'.",
       inputSchema: { file: z.string().describe("path relative to the docs root, as listed in the manifest") },
     },
     async ({ file }) => text(await readFile(safeDoc(file), "utf8"))

@@ -8,7 +8,8 @@
   },
   "scripts": {
     "prepack": "./scripts/sync-bundles.sh",
-    "test": "./tests/test-cli.sh"
+    "test": "./tests/test-cli.sh",
+    "sync-docs": "node scripts/sync-official-docs.mjs && ./scripts/sync-bundles.sh"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.30.0",
@@ -19,13 +20,16 @@
     "agents",
     "skills",
     "concepts",
+    "language",
     "reference",
     "visuals",
     "writing_scripts",
+    "faq",
+    "errors",
+    "migration_guides",
+    "primer",
     "LLM_MANIFEST.md",
     "release_notes.md",
-    "pine_script_execution_model.md",
-    "pinescriptv6_complete_reference.md",
     ".claude-plugin"
   ],
   "keywords": [

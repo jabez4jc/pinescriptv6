@@ -2,15 +2,15 @@
 # Regenerates the standalone doc bundles under skills/pinescript-v6/ and
 # agents/pinescript-developer/ from the canonical root-level docs.
 #
-# Root-level concepts/, reference/, visuals/, writing_scripts/,
-# release_notes.md, pine_script_execution_model.md, and LLM_MANIFEST.md are
-# the single source of truth. Never hand-edit the copies under skills/ or
+# The root-level doc directories, release_notes.md, and LLM_MANIFEST.md are
+# the single source of truth (regenerated from TradingView by
+# scripts/sync-official-docs.mjs). Never hand-edit the copies under skills/ or
 # agents/ directly — edit the root files and re-run this script.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-SOURCE_DIRS=(concepts reference visuals writing_scripts)
-SOURCE_FILES=(release_notes.md pine_script_execution_model.md)
+SOURCE_DIRS=(concepts language reference visuals writing_scripts faq errors migration_guides primer)
+SOURCE_FILES=(release_notes.md)
 TARGETS=(skills/pinescript-v6 agents/pinescript-developer)
 
 for target in "${TARGETS[@]}"; do

@@ -31,34 +31,33 @@ All paths below are relative to that bundled directory, not the repo root.
 
 ## Key files
 
-- `MANIFEST.md` — master routing index (read this first, always)
-- `release_notes.md` — v6-specific additions (`once`,
-  `calc_on_every_history_tick` and the new strategy settings UI, UDT
-  `sort_field`, multiline strings, `request.footprint`, `syminfo.isin`,
-  `timeframe_bars_back`, line-wrapping rules)
-- `concepts/execution_model.md` + `pine_script_execution_model.md` — bar-by-bar
-  execution, `var`/`varip`, historical vs. realtime — consult this for any
-  "why does my variable behave oddly" question
-- `concepts/timeframes.md` — multi-timeframe data and repainting; consult for
-  ANY use of `request.security` or higher-timeframe logic
-- `concepts/common_errors.md` — check this against the user's exact error text
-  before proposing a fix
-- `reference/functions/ta.md`, `strategy.md`, `request.md`, `drawing.md`,
-  `collections.md`, `general.md` — the function dictionary, one namespace per
-  file
-- `reference/variables.md`, `constants.md`, `types.md`, `keywords.md`,
-  `operators.md`, `annotations.md` — core language reference
-- `visuals/*.md` — drawing/plotting cookbook (plots, bar coloring, tables,
-  lines/boxes, fills, backgrounds, text/shapes, levels); start with
-  `visuals/overview.md`
-- `writing_scripts/style_guide.md` — formatting/indentation/line-wrapping
-  conventions to match in generated code
-- `writing_scripts/debugging.md` — techniques for isolating bugs in a script
-- `writing_scripts/profiling_and_optimization.md`, `limitations.md` —
-  performance limits (e.g. `max_bars_back`), loop/array cost characteristics
-- `writing_scripts/publishing_guidelines.md`, `publishing_scripts.md` —
-  TradingView house rules, visibility types (open/protected/invite-only),
-  vendor requirements for paid scripts, BBCode formatting for descriptions
+- `MANIFEST.md`: master routing index (read this first, always)
+- `reference/INDEX.md`: every v6 built-in name. If a name isn't listed, it
+  doesn't exist in v6.
+- `reference/<ns>.md`: full signatures, typed arguments, returns, remarks and
+  examples for every `ns.*` built-in (`ta`, `strategy`, `request`, `array`,
+  `str`, `math`, `input`, `line`, `box`, `label`, `table`, `syminfo`, ...).
+  Unnamespaced built-ins are in `plot.md`, `time.md`, `bar_variables.md`,
+  and `core.md`. All constants are in `constants.md`.
+- `language/execution_model.md`, `language/variable_declarations.md`:
+  bar-by-bar execution, `var`/`varip`, historical vs. realtime, rollback.
+  Consult these for any "why does my variable behave oddly" question.
+- `language/type_system.md`: qualifiers (const/input/simple/series), the
+  source of most "cannot call with argument" errors
+- `concepts/other_timeframes_and_data.md`, `concepts/repainting.md`: consult
+  for ANY use of `request.*` or higher-timeframe logic
+- `concepts/strategies.md`: broker emulator, order types, fills, execution
+  settings, margin
+- `errors/*.md`, `concepts/common_errors.md`: check against the user's exact
+  error text before proposing a fix
+- `visuals/*.md`: plots, colors, fills, lines/boxes/polylines,
+  labels/text/shapes, tables, levels
+- `writing_scripts/style_guide.md`, `debugging.md`,
+  `profiling_and_optimization.md`, `limitations.md`
+- `writing_scripts/publishing.md`, `publishing_guidelines.md`: house rules,
+  visibility types, vendor requirements, BBCode
+- `migration_guides/to_pine_version_6.md`: every v5 to v6 breaking change
+- `release_notes.md`: recent features, newest first
 
 ## Review checklist (when reviewing existing Pine Script code)
 
@@ -69,11 +68,11 @@ All paths below are relative to that bundled directory, not the repo root.
       exception) on a higher timeframe
 - [ ] `var`/`varip` usage matches intent — not accidentally reset every bar,
       or accidentally persisted when it shouldn't be
-- [ ] Series vs. simple/const argument mismatches (a common v6 compile error —
-      cross-check against `concepts/common_errors.md`)
+- [ ] Series vs. simple/const argument mismatches (a common v6 compile error;
+      cross-check against `language/type_system.md` and `errors/`)
 - [ ] Strategy order logic (`strategy.entry`/`strategy.exit`/`strategy.close`,
       position sizing, risk calls) matches current syntax in
-      `reference/functions/strategy.md`, not older `strategy.risk.*` patterns
+      `reference/strategy.md`, not older `strategy.risk.*` patterns
 - [ ] Drawing object counts stay within TradingView's per-type limits (see
       `writing_scripts/limitations.md`) — flag scripts that create
       lines/labels/boxes in unbounded loops without `max_bars_back`/history
@@ -87,15 +86,13 @@ All paths below are relative to that bundled directory, not the repo root.
 
 Be direct and concrete. When you fix or write code, cite which reference file
 confirmed the syntax if the choice is non-obvious (e.g., "per
-`reference/functions/strategy.md`, `strategy.exit` needs `from_entry` here to
+`reference/strategy.md`, `strategy.exit` needs `from_entry` here to
 target the long-only entry"). Don't pad explanations — the code and a short
 rationale are the deliverable.
 
 ## Note for maintainers
 
-The `pinescript-developer/` bundle is generated from the canonical root-level
-docs by `scripts/sync-bundles.sh` — do not hand-edit files inside it. Edit the
-root `concepts/`, `reference/`, `visuals/`, `writing_scripts/`,
-`release_notes.md`, `pine_script_execution_model.md`, or `LLM_MANIFEST.md`,
-then re-run the sync script (or just commit — the pre-commit hook runs it for
-you).
+The `pinescript-developer/` bundle is copied from the repo's root docs by
+`scripts/sync-bundles.sh`, and those are generated from TradingView's official
+docs by `scripts/sync-official-docs.mjs`. Don't hand-edit either; run
+`npm run sync-docs` to refresh.
