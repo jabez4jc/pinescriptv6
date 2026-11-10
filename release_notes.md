@@ -6,6 +6,112 @@ This page contains release notes describing notable changes to the Pine Script®
 
 ## 2026
 
+### October 2026
+
+#### Input alignment improvements
+
+We’ve improved the horizontal alignment behavior of inline inputs in the “Settings/Inputs” tab. The new system allows coders to create big input groups with many inlined inputs that are still aligned with each other, without adding any manual aligning logic or spacing workarounds.
+
+Previously, any `input*()` calls that used a non-empty `inline` argument had different alignment behavior from those that did not, affecting the readability and aesthetics of inputs in the tab. The typical workaround was to apply Unicode spaces to inline input titles to force horizontal alignment, but that workaround produced inconsistent results between different operating systems and devices.
+
+Now, inline inputs follow different rules to align consistently with non-inline inputs, without requiring workarounds such as character padding in titles. However, these rules apply only if the inline inputs meet the following criteria:
+
+- The **first** `input*()` call with specific `inline` and `group` arguments includes a non-empty `title` argument.
+- All other inputs with the same `inline` and `group` arguments use an empty string (`""`) as the `title` argument.
+
+Here’s an example of how this system changes properly formatted inputs to ensure all rows align:
+
+```pine
+//@version=6
+indicator("Improved input alignment demo", overlay = true)
+
+// ───── Pivots ─────
+const string GRP_PIVOTS = "Pivots"
+
+bool   showPivotsInput      = input.bool(true, "Show Pivots", inline = "pivots", group = GRP_PIVOTS)
+string pivotsStyleInput     = input.string("Solid", "", options = ["Solid", "Dashed", "Dotted"], inline = "pivots", group = GRP_PIVOTS)
+int    pivotsWidthInput     = input.int(1, "", minval = 1, maxval = 4, inline = "pivots", group = GRP_PIVOTS)
+
+bool   showMidpointsInput   = input.bool(false, "Midpoints", inline = "mid", group = GRP_PIVOTS)
+string midpointsStyleInput  = input.string("Dotted", "", options = ["Solid", "Dashed", "Dotted"], inline = "mid", group = GRP_PIVOTS)
+int    midpointsWidthInput  = input.int(1, "", minval = 1, maxval = 4, inline = "mid", group = GRP_PIVOTS)
+
+bool   showLabelsInput      = input.bool(true, "Pivot Labels", inline = "labels", group = GRP_PIVOTS)
+string labelsSideInput      = input.string("Right", "", options = ["Left", "Right"], inline = "labels", group = GRP_PIVOTS, tooltip = "Shows the name of each pivot level on the chosen side of the line.")
+
+bool   alertBrokenInput     = input.bool(true, "Alert Broken Pivots", group = GRP_PIVOTS, tooltip = "Triggers an alert when price breaks through a pivot level.")
+
+string extendPivotsInput    = input.string("Until Mitigated", "Extend Pivots...", options = ["Until Mitigated", "To Session End", "Indefinitely"], group = GRP_PIVOTS)
+string fromSessionsInput    = input.string("Most Recent", "...From Which Sessions", options = ["Most Recent", "All"], group = GRP_PIVOTS, tooltip = "Selects which sessions' pivots are extended.")
+
+// ───── Range Data & Levels ─────
+const string GRP_RANGE = "Range Data & Levels"
+
+bool   showTableInput       = input.bool(true, "Show Data Table", inline = "table", group = GRP_RANGE)
+string tablePositionInput   = input.string("Top Right", "", options = ["Top Left", "Top Center", "Top Right", "Middle Left", "Middle Center", "Middle Right", "Bottom Left", "Bottom Center", "Bottom Right"], inline = "table", group = GRP_RANGE)
+string tableSizeInput       = input.string("Small", "", options = ["Tiny", "Small", "Normal", "Large"], inline = "table", group = GRP_RANGE, tooltip = "Position and text size of the data table.")
+
+bool   pivotStatsInput      = input.bool(true, "Pivot Stats", inline = "stats", group = GRP_RANGE)
+bool   rangeLevelStatsInput = input.bool(true, "Range Level Stats", inline = "stats", group = GRP_RANGE)
+bool   dwmStatsInput        = input.bool(true, "D/W/M Stats", inline = "stats", group = GRP_RANGE, tooltip = "Selects which sections are shown in the data table.")
+
+int    dataLookbackInput    = input.int(20, "Data Lookback", minval = 1, group = GRP_RANGE, tooltip = "Number of past sessions used to calculate range statistics.")
+string rangeMeasureInput    = input.string("Average", "Range Measurement", options = ["Average", "Median"], group = GRP_RANGE, tooltip = "How the typical session range is calculated.")
+
+plot(na)
+```
+
+### September 2026
+
+#### Tables in the bottom panel
+
+Users can now move [tables](visuals/tables.md) drawn by a script into a *separate tab* in the chart’s *bottom panel*. To move a script’s tables to the panel, open the “More” menu in the script’s status line and select the *“Move tables to bottom”* option. To move the tables back to the chart, select *“Move tables to chart”* from the “More” menu or from the *context menu* opened at the top of the panel’s tab.
+
+Tables in the bottom panel have different positioning and cell-sizing rules from those on the chart. All tables stack *vertically* in order from first to last, regardless of the `position` and `force_overlay` arguments of each `table.new()` call. The cells of each table also stretch as necessary to fit the allocated width and height within the pane, without truncating the displayed text. Additionally, users can select and copy the text from tables in the bottom panel, unlike tables displayed on the chart.
+
+See the [Displaying tables in the bottom panel](visuals/tables.md#displaying-tables-in-the-bottom-panel) section of the [Tables](visuals/tables.md) page to learn more about this feature and how it works.
+
+#### Improved line wrapping in square brackets
+
+We’ve improved the [line wrapping](language/script_structure.md#line-wrapping) behaviors for code within *square brackets* (`[ ]`). Previously, all line-wrapped [history-referencing operations](language/operators.md#-history-referencing-operator) or [tuples](language/type_system.md#tuples) required indenting each line after the first by any number of spaces that was *not* a multiple of four. The only exception was for square brackets enclosed in a set of parentheses, because code within parentheses can contain any amount of indentation, whether zero or a multiple of four spaces.
+
+We’ve extended the indentation flexibility for code in parentheses to all code between square brackets. Now, wrapped code within square brackets can use any amount of indentation without restriction. For example:
+
+```pine
+//@version=6
+indicator("Four-space indentation in square brackets demo")
+
+// This function definition line wraps history-referencing operations and the tuple return using indentation
+// in multiples of four spaces.
+ohlcChange(int length) =>
+    float oChange = open - open[
+        length]                     // Indented by eight spaces.
+    float hChange = high - high[
+        length                      // Indented by eight spaces.
+    ]                               // Indented by four spaces.
+    float lChange = low - low[
+            length                  // Indented by 12 spaces.
+        ]                           // Indented by eight spaces.
+    float cChange = close - close[
+    length                          // Indented by four spaces.
+            ]                       // Indented by 12 spaces.
+    [
+oChange, hChange,                   // No indentation.
+                lChange, cChange    // Indented by 16 spaces.
+    ]                               // Indented by four spaces.
+
+// This tuple declaration lists all identifiers on separate lines, using multiples of four spaces for indentation.
+// Previously, such a declaration caused a compilation error.
+[
+    oc,                             // Indented by four spaces.
+        hc,                         // Indented by eight spaces.
+            lc,                     // Indented by 12 spaces.
+                cc                  // Indented by 16 spaces.
+] = ohlcChange(10)                  // No indentation.
+
+plotcandle(oc, hc, lc, cc, "Change candles")
+```
+
 ### August 2026
 
 #### Pine Screener improvements
@@ -98,7 +204,7 @@ Also no indentation.
 
 if barstate.islastconfirmedhistory
     //@variable A multiline string with indentation defined in a local block.
-    //          Although the block requires four spaces of intendation for its statements, the string itself does not.
+    //          Although the block requires four spaces of indentation for its statements, the string itself does not.
     //          Any indentation in the definition is still included literally in the string.
     string localIndentedStr = """---
 No indentation.
@@ -181,7 +287,7 @@ if barstate.islastconfirmedhistory
     // Log a message showing the unsorted array's structure.
     log.info("Unsorted" + repr(reqData))
 
-    //#region Display the structure of the array after sorting it using each field.
+    //#region --- Display the structure of the array after sorting it using each field ---
 
     // First, let's sort the `reqData` array using the default `sort_field` argument (0) and log the result.
     // The default value refers to the *first field* listed in the `Data` type declaration (`price`).

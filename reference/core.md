@@ -247,11 +247,13 @@ plot(sinh(0))
 
 ### max_bars_back()
 
-Function sets the maximum number of bars that is available for historical reference of a given built-in or user variable. When operator '[]' is applied to a variable - it is a reference to a historical value of that variable.
+Explicitly sets the minimum length of the [historical buffer](../language/execution_model.md#historical-buffers) for a built-in or user-defined variable. The historical buffer determines the maximum span of past values that the script can access from the variable's series by using the [[]](#op_[]) history-referencing operator or functions that reference past values internally.
 
-If an argument of an operator '[]' is a compile time constant value (e.g. 'v[10]', 'close[500]') then there is no need to use 'max_bars_back' function for that variable. Pine Script® compiler will use that constant value as history buffer size.
+By default, the runtime system automatically sizes the buffer for each series based on the script's references to past values across historical bars. It sets an initial buffer size based on the historical references across early bars of the dataset. If the references on later historical bars exceed the initial buffer's limit, the system restarts the script and increases the buffer size to accommodate those references. In the rare case that it fails to find an appropriate buffer size after restarting the script several times, it raises a runtime error.
 
-If an argument of an operator '[]' is a value, calculated at runtime (e.g. 'v[i]' where 'i' - is a series variable) then Pine Script® attempts to autodetect the history buffer size at runtime. Sometimes it fails and the script crashes at runtime because it eventually refers to historical values that are out of the buffer. In that case you should use 'max_bars_back' to fix that problem manually.
+This automatic sizing process applies only while the script loads on historical bars. The system does not continue to resize buffers on realtime bars. If a historical reference on a realtime bar exceeds the buffer's limit, the same runtime error occurs.
+
+Therefore, this function is useful if the system cannot determine an appropriate buffer size for a series after several attempts on historical bars, or if the script references a larger depth of past values on realtime bars. Using it in other cases is typically unnecessary. Refer to the [RE10143 error page](../errors/RE10143.md#the-requested-historical-offset-x-is-beyond-the-historical-buffers-limit-y) in our User Manual to learn more about buffer sizing and how to use this function effectively.
 
 ```pine
 max_bars_back(var, num) → void
@@ -259,30 +261,52 @@ max_bars_back(var, num) → void
 
 **Arguments**
 
-- `var` (series int/float/bool/color/label/line): Series variable identifier for which history buffer should be resized. Possible values are: 'open', 'high', 'low', 'close', 'volume', 'time', or any user defined variable id.
-- `num` (const int): History buffer size which is the number of bars that could be referenced for variable 'var'.
+- `var` (any type that is compatible with the `[]` operator): The variable for which to set the buffer size. The parameter accepts most built-in and user-defined variables whose history can be referenced by the [[]](#op_[]) operator.
+- `num` (const int): Specifies the maximum number of past values that the buffer stores for the variable. The largest possible argument is 5000.
 
 **Returns:** void
 
 **Remarks**
 
-At the moment 'max_bars_back' cannot be applied to built-ins like 'hl2', 'hlc3', 'ohlc4'. Please use multiple 'max_bars_back' calls as workaround here (e.g. instead of a single ‘max_bars_back(hl2, 100)’ call you should call the function twice: ‘max_bars_back(high, 100), max_bars_back(low, 100)’).
+When using this function or other manual buffer-sizing techniques, specify the smallest possible buffer size that accommodates the required historical references. Avoid using a size that is too small or too large. Using a larger buffer size than necessary can significantly increase a script's memory use. In some cases, excessive buffers can even cause a script to [exceed its memory limits](../errors/RE10139.md#memory-limits-exceeded).
 
-If the `indicator()` or `strategy()` 'max_bars_back' parameter is used, all variables in the indicator are affected. This may result in excessive memory usage and cause runtime problems. When possible (i.e. when the cause is a variable rather than a function), please use the `max_bars_back()` function instead.
+The `indicator()` and `strategy()` functions also include a `max_bars_back` parameter, which sets the default buffer size for every series in a script if it has a specified argument. This parameter offers a more concise way to manually size historical buffers. However, setting each buffer to the same size can substantially increase memory use. Therefore, unless most or all series in a script actually require buffers of the same size, using the `max_bars_back()` function to set the sizes for only the specific buffers that require manual sizing is typically more optimal.
+
+This function cannot set the buffer sizes for some built-in variables that are derived from other built-ins (`hl2`, `hlc3`, etc.). To work around this limitation, use this function to set the buffers for the underlying series instead. For example, rather than directly using `hl2` in a single `max_bars_back()` call, use two separate calls with `high` and `low` as `var` arguments.
 
 ```pine
 //@version=6
-indicator("max_bars_back")
-close_() => close
-depth() => 400
-d = depth()
-v = close_()
-max_bars_back(v, 500)
-out = if bar_index > 0
-	v[d]
-else
-	v
-plot(out)
+indicator("`max_bars_back()` demo")
+
+if barstate.isrealtime
+    //@variable References an array of chart points for the polyline.
+    var array<chart.point> points = array.new<chart.point>()
+    //@variable Stores the ID of a `polyline` object.
+    var polyline p = na
+
+    // Clear all chart points in the array and delete the existing polyline.
+    points.clear()
+    polyline.delete(p)
+
+    // Populate the array with new points. Each point shows the change in `close` values over a specific length.
+    for i = 1 to 500
+        chart.point point = chart.point.from_index(bar_index - i + 1, close - close[i])
+        points.push(point)
+    // Create a new polyline with the new points and assign its ID to `p`.
+    p := polyline.new(points)
+
+//#region
+// The two calls below enable the script to run. If either is removed, the script causes an error,
+// because it performs all historical references on realtime bars -- where the system cannot size buffers automatically.
+
+// This call sets the `close` buffer to contain 500 past values (the maximum amount that the script requires).
+max_bars_back(close, 500)
+
+// This call sets the `time` buffer to also contain 500 past values.
+// Although the script does not explicitly use `time` in its calculations, drawing calculations convert bar indices
+// to `time` values internally.
+max_bars_back(time, 500)
+//#endregion
 ```
 
 **See also:** Param 'max_bars_back' of `indicator()` and `strategy()` functions.

@@ -145,7 +145,7 @@ The example is calculated from left to right:
 
 Note that, in contrast to [conditional structures](conditional_structures.md), the ternary operator does *not* create [local scopes](../faq/programming.md#what-does-scope-mean).
 
-## [​`[]`​ history-referencing operator](#-history-referencing-operator)
+## ​`[]`​ history-referencing operator
 
 It is possible to refer to past values of [time series](execution_model.md#time-series) using the `[]` history-referencing operator. Past values are values a variable had on bars preceding the bar where the script is currently executing — the *current bar*. See the [Execution model](execution_model.md) page for more information about the way scripts are executed on bars.
 

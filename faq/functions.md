@@ -49,7 +49,7 @@ bgcolor(newDay ? color.new(color.gray, 80) : na)
 plot(lookback, "Lookback", display = display.data_window)
 ```
 
-> **Notice:** If a script uses a dynamic value as the argument for a built-in function parameter that defines a lookback length, such as the `length` parameter of `ta.sma()`, an error can occur if the value increases unpredictably. This behavior is most common on realtime bars, but it can also happen on historical bars in some cases. Refer to the section [The requested historical offset (X) is beyond the historical buffer’s limit (Y)](https://www.tradingview.com/pine-script-docs/error-messages/#the-requested-historical-offset-x-is-beyond-the-historical-buffers-limit-y) in the [Error messages](https://www.tradingview.com/pine-script-docs/error-messages/) page for more information about the error and its causes.
+> **Notice:** If a script uses a dynamic value as the argument for a built-in function parameter that defines a lookback length, such as the `length` parameter of `ta.sma()`, an error can occur if the value increases unpredictably. This behavior is most common on realtime bars, but it can also happen on historical bars in some cases. Refer to the error page [The requested historical offset (X) is beyond the historical buffer’s limit (Y)](../errors/RE10143.md) for more information about the error and its causes.
 
 ## How can I round a number to x increments?
 

@@ -51,7 +51,7 @@ In contrast, when a script allows dynamic requests, it can call `request.*()` fu
 - Retrieve data from new datasets on *any* historical bar, even *after* the first available bar, with a single `request.*()` call instance.
 - Store symbol and timeframe strings in [collections](../language/type_system.md#collections) or [objects](../language/objects.md), then use the collected values to define a `request.*()` call’s context.
 - Call `request.*()` functions within the local scopes of [loops](../language/loops.md) and [conditional structures](../language/conditional_structures.md).
-- [Export library functions](../concepts/libraries.md#library-functions) containing `request.*()` calls.
+- Export library functions containing `request.*()` calls. See the [Exporting `request.*()` calls](../concepts/libraries.md#exporting-request-calls) section of the [Libraries](../concepts/libraries.md) page to learn more.
 
 *Non-dynamic* requests are the default in Pine v5. Scripts coded in v5 can execute dynamic requests, but only if programmers specify `dynamic_requests = true` in the `indicator()`, `strategy()`, or `library()` declaration statement. If not specified, the default argument is `false`.
 

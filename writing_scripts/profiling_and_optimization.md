@@ -1712,11 +1712,11 @@ gcd(int a, int b) =>
 plot(gcd(10000, 10000 + bar_index), "GCD")
 ```
 
-When we add the script to our chart, it takes a while to execute across our chart's data, but it does not raise an error. However, *after* enabling the [Profiler](#pine-profiler), the script raises a runtime error stating that it exceeded the Premium plan's [runtime limit](https://www.tradingview.com/support/solutions/43000579793/) (40 seconds):
+When we add the script to our chart, it takes a while to execute across our chart's data, but it does not raise an error. However, *after* enabling the [Profiler](#pine-profiler), the script raises a runtime error stating that it exceeded our plan’s [runtime limit](https://www.tradingview.com/support/solutions/43000579793/):
 
-Our current chart has over 20,000 historical bars, which may be too many for the script to handle within the alloted time while the [Profiler](#pine-profiler) is active. We can try limiting the number of historical executions to work around the issue in this case.
+Our current chart has over 20,000 historical bars, which may be too many for the script to handle within the allotted time while the [Profiler](#pine-profiler) is active. We can try limiting the number of historical executions to work around the issue in this case.
 
-Below, we included `calc_bars_count = 10000` in the `indicator()` function, which limits the script's available history to the most recent 10,000 historical bars. After restricting the script's historical executions, it no longer exceeds the Premium plan's limit while profiling, so we can now inspect its performance results:
+Below, we included `calc_bars_count = 10000` in the `indicator()` function, which limits the script's available history to the most recent 10,000 historical bars. After restricting the script's historical executions, it no longer exceeds our plan’s limit while profiling, so we can now inspect its performance results:
 
 ```pine
 //@version=6

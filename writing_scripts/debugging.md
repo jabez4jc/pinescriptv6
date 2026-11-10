@@ -999,7 +999,7 @@ int smoothingInput = input.int(10)
 //@variable The maximum of `length1Input` and `length2Input`.
 int maxLength = math.max(length1Input, length2Input)
 
-//#region Split the `osc` calculations into smaller parts:
+//#region --- Split the `osc` calculations into smaller parts ---
 
 // 1. Calculate the EMAS over `length1Input` and `length2Input` bars.
 float ema1 = ta.ema(close, length1Input), float ema2 = ta.ema(close, length2Input)
@@ -1014,7 +1014,7 @@ float medChange = math.avg(change1, change2)
 //@variable The smoothed median change in the differences between `close` and two EMAs over different lengths.
 float osc = ta.ema(medChange, smoothingInput)
 
-//#region Split the `upSignal` calculations and logic into smaller parts:
+//#region --- Split the `upSignal` calculations and logic into smaller parts ---
 
 // 1. Assign the calculations in the expression to separate variables.
 float oscDev  = 2 * ta.stdev(osc, maxLength), float pastAvg = math.avg(osc[1], osc[2])

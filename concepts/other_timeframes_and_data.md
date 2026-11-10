@@ -255,7 +255,7 @@ By default, unlike all previous Pine Script versions, `request.*()` function cal
 In contrast to non-dynamic requests, dynamic requests can:
 
 - Access data from different data feeds using a single `request.*()` instance with [“series” arguments](#series-arguments).
-- Execute within the [local scopes](#in-local-scopes) of [conditional structures](../language/conditional_structures.md), [loops](../language/loops.md), and [exported functions](libraries.md#library-functions).
+- Execute within the [local scopes](#in-local-scopes) of [conditional structures](../language/conditional_structures.md), [loops](../language/loops.md), and [exported functions](libraries.md#user-defined-functions-and-methods).
 - Execute [nested requests](#nested-requests).
 
 Aside from the features listed above, there are insignificant differences in the behavior of dynamic and non-dynamic requests. However, for backward compatibility, programmers can deactivate dynamic requests by specifying `dynamic_requests = false` in the `indicator()`, `strategy()`, or `library()` declaration statement.
@@ -2845,7 +2845,7 @@ indicator("Too many footprint requests demo")
 //@variable The size of each footprint row, expressed in ticks.
 int ticksInput = input.int(100, "Ticks per row", 1)
 
-//#region
+//#region --- Copied code ---
 // The code in this region is copied into the `request.security()` call's context, because all of it affects
 // the `pocMA` variable used as the call's `expression` argument.
 
@@ -2880,7 +2880,7 @@ indicator("Removed footprint request demo")
 //@variable The size of each footprint row, expressed in ticks.
 int ticksInput = input.int(100, "Ticks per row", 1)
 
-//#region
+//#region --- Unused code ---
 // Although this code is still defined in the global scope, it does *not* execute in this scope, because the script's
 // outputs no longer depend on the data assigned to the `fp`, `poc`, or `pocMA` variables now that we removed the
 // `plot(pocMA)` call.

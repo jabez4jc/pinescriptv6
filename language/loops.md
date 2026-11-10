@@ -473,7 +473,7 @@ Note that:
 
 - When a `while` loop uses count-based logic, it must explicitly manage the user-specified counter within the local block. In contrast, a `for` loop increments its counter automatically.
 - The script declares the variable the `while` loop uses as a counter *outside* the loop’s [scope](#scope), meaning its value is usable in additional calculations after the loop terminates.
-- If this code did not increment the `j` variable within the `while` loop’s body, the value would *never* reach 10, meaning the loop would run *indefinitely* until causing a [runtime error](https://www.tradingview.com/pine-script-docs/error-messages/#loop-is-too-long--500-ms).
+- If this code did not increment the `j` variable within the `while` loop’s body, the value would *never* reach 10, meaning the loop would run *indefinitely* until causing a runtime error.
 
 Because a `while` loop’s execution depends on its condition remaining `true`, and the condition might not change on a specific iteration, the *precise* number of expected iterations might not be knowable *before* the loop begins. Therefore, `while` loops are often helpful in scenarios where the exact loop boundaries are *unknown*.
 

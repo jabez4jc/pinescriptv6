@@ -50,7 +50,7 @@ Lines in a script that are not [comments](#comments) or [compiler annotations](#
 - [variable declaration](variable_declarations.md)
 - [variable reassignment](variable_declarations.md#variable-reassignment)
 - [function definition](user_defined_functions.md#structure-and-syntax)
-- [built-in function call](built_ins.md#built-in-functions), [user-defined function call](user_defined_functions.md) or [a library function call](../concepts/libraries.md#using-a-library)
+- [built-in function call](built_ins.md#built-in-functions), [user-defined function call](user_defined_functions.md) or [a library function call](../concepts/libraries.md#using-imported-code)
 - `if`, `for`, `while`, `switch`, `type`, or `enum` *structure*.
 
 Statements can be arranged in multiple ways:
@@ -133,44 +133,56 @@ float x = open +
           close    // Indented by 10 spaces.
 ```
 
-If parts of a wrapped expression are enclosed in *parentheses* `( )`, such as function calls or parameter declarations, the wrapped lines within the parentheses *do not* have any restriction on their indentation lengths. Therefore, those wrapped lines can use any indentation length *including* multiples of four.
+If parts of a line-wrapped statement or expression are within *parentheses* `( )` or *square brackets* `[ ]`, all code between those characters *does not* have any restriction on indentation length; the code can use *any* number of spaces for indentation, including zero and any multiple of four.
 
-For example, this script demonstrates various ways that expressions enclosed in parentheses can wrap across multiple lines:
+For example, this script demonstrates various ways in which code enclosed in parentheses or square brackets can wrap across multiple lines:
 
 ```pine
 //@version=6
-indicator("Line wrapping within parentheses demo")
+indicator("Line wrapping within parentheses and brackets demo")
 
-// We can enclose operations in parentheses to wrap them across multiple lines using a four-space indentation.
+// We can enclose expressions in parentheses to wrap them across multiple lines using a four-space indentation.
 float x = (open +
-    high +
-    low +
-    close)
+    high +              
+    low +          
+    close)
 
 // We can wrap a long function call across two lines, for a minimal line wrapping style.
 plot(ta.sma(close, 14), title = "Avg close", color = color.new(color.purple, 70), style = plot.style_area,
- force_overlay = true, display = display.all - display.status_line)     // Indented by one space.
+force_overlay = true, display = display.all - display.status_line)  // No indentation.
 
-// We can also wrap a long function call across multiple lines, each with different indentation lengths.
-// The parentheses enclosing the wrapped lines can start and end on separate lines than the wrapped content.
+// We can apply any indentation to line wraps in square brackets as well.
+[
+    macd, signal, hist
+] = ta.macd(x, 12, 26, 9)
+
+// We can also apply different indentation lengths across the same line-wrapped expression.
+// The enclosing parentheses or square brackets can start and end on separate lines from the wrapped content.
+float osc = (
+ signal                                                         // Indented by one space.
+    + 2 * hist                                                  // Indented by four spaces.
+        * math.abs(ta.change(macd, 10) / ta.stdev(macd, 10))    // Indented by eight spaces.
+)                                                               // No indentation.
+
 plot(
- series = x, title = "Sum OHLC",                              // Indented by one space.
-   color = (x >= x[1] ? color.green : color.red),             // Indented by three spaces.
-    linewidth = 4,                                            // Indented by four spaces.
-        style = plot.style_stepline                           // Indented by eight spaces.
-)                                                             // No indentation.
+series = osc, title = "Custom osc",                             // No indentation.
+  color = osc > osc[                                            // Indented by two spaces.
+            1                                                   // Indented by 12 spaces.
+    ] ? color.green : color.red,                                // Indented by four spaces.
+      linewidth = 3                                             // Indented by six spaces.
+         )                                                      // Indented by nine spaces.
 ```
 
-Expressions inside *local* code blocks can also use line wrapping. A local block requires indenting each line that belongs to its scope by four spaces or a tab relative to the local block’s header. Therefore, we recommend indenting any wrapped lines inside local blocks by a *larger* indentation than that of the block’s scope for readability. For example:
+Expressions inside *local* code blocks can also use line wrapping. A local block requires indenting each line that belongs to its scope by four spaces or a tab relative to the local block’s header. Therefore, we recommend indenting any wrapped lines inside a local block by a *larger* number of spaces than that of the block to preserve scope readability. For example:
 
 ```pine
 upDown(float s) =>
-    // These lines are indented by four spaces relative to the `upDown()` function header to belong to its local scope.
+    // These lines are indented by four spaces relative to the `upDown()` function header because they belong to the function's scope.
     var int ud = 0
     bool isEqual   = s == s[1]
     bool isGrowing = s > s[1]
-    // Within the local block, this statement wraps across multiple lines, where each line uses
-    // an indentation length that is larger than the indentation that signifies the local block's scope.
+    // Within the local block, this statement wraps across multiple lines, where each part uses
+    // an indentation length that is larger than the required indentation for the function block.
     ud := isEqual ?
            0 :
            isGrowing ?
@@ -228,7 +240,7 @@ This example draws a triangle using three interactively selected points on the c
 //@version=6
 indicator("Triangle", "", true)
 
-//#region ———————————————————— Constants and inputs
+//#region --- Constants and inputs ---
 
 int   TIME_DEFAULT  = 0
 float PRICE_DEFAULT = 0.0
@@ -241,7 +253,7 @@ x3Input = input.time(TIME_DEFAULT,   "Point 3", inline = "3", confirm = true)
 y3Input = input.price(PRICE_DEFAULT, "",        inline = "3", tooltip = "Pick point 3", confirm = true)
 //#endregion
 
-//#region ———————————————————— Types and functions
+//#region --- Types and functions ---
 
 // @type            Used to represent the coordinates and color to draw a triangle.
 // @field time1     Time of first point.
@@ -269,7 +281,7 @@ drawTriangle(Triangle t) =>
     line.new(t.time1, t.price1, t.time3, t.price3, xloc = xloc.bar_time, color = t.lineColor)
 //#endregion
 
-//#region ———————————————————— Calculations
+//#region --- Calculations ---
 
 // Draw the triangle only once on the last historical bar.
 if barstate.islastconfirmedhistory

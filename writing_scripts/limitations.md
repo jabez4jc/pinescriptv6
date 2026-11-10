@@ -22,11 +22,11 @@ Scripts must compile before they are executed on charts. Compilation occurs when
 
 ### Script execution
 
-Once a script is compiled it can be executed. See the [Events that trigger script executions](../language/execution_model.md#events-that-trigger-script-executions) section of the [Execution model](../language/execution_model.md) page for a list of the events triggering the execution of a script. The time allotted for the script to execute on all bars of a dataset varies with account types. The limit is 20 seconds for basic accounts, 40 for others.
+Once a script is compiled it can be executed. See the [Events that trigger script executions](../language/execution_model.md#events-that-trigger-script-executions) section of the [Execution model](../language/execution_model.md) page for a list of the events triggering the execution of a script. The time allotted for the script to execute on all bars of a dataset varies with account types. See the “Compare plans” section of the [pricing page](https://www.tradingview.com/pricing/) for details.
 
 ### Loop execution
 
-The execution time for any loop on any single bar is limited to 500 milliseconds. The outer loop of embedded loops counts as one loop, so it will time out first. Keep in mind that even though a loop may execute under the 500 ms time limit on a given bar, the time it takes to execute on all the dataset's bars may nonetheless cause your script to exceed the total execution time limit. For example, the limit on total execution time will make it impossible for you script to execute a 400 ms loop on each bar of a 20,000-bar dataset because your script would then need 8000 seconds to execute.
+The execution time for any loop on any single bar is limited to 500 milliseconds. The outer loop of embedded loops counts as one loop, so it will time out first. Keep in mind that even though a loop may execute under the 500 ms time limit on a given bar, the time it takes to execute on all the dataset's bars may nonetheless cause the script to exceed the total execution time limit. For example, the limit on total execution time will make it impossible for the script to execute a 400 ms loop on each bar of a 20,000-bar dataset because the script would then need 8000 seconds to execute.
 
 ## Chart visuals
 
@@ -268,7 +268,7 @@ Scripts can retrieve up to the most recent 200,000 *intrabars* (lower-timeframe 
 
 The `calc_bars_count` parameter of the `request.*()` functions limits the intrabar data retrieved by a request. If a `request.*()` call does not include a `calc_bars_count` argument, the number of requested bars is the same as the number of [chart bars](#chart-bars) available for the symbol and timeframe. Otherwise, the function retrieves up to the specified number of bars, depending on the span of the dataset. The largest possible number of bars in the request depends on the limits listed above.
 
-The number of bars on the chart’s timeframe covered by a lower-timeframe request varies with the number of intrabars available for each chart bar. For example, if a script running on a 60-minute chart uses a `request.*()` call that requests data from the 1-minute timeframe, that call can retrieve data for up to 60 intrabars per chart bar. If the call uses the argument `calc_bars_count = 100000`, the minimum number of chart bars covered by the request is 1666, because 100000 / 60 = 1666.67. However, it’s important to note that a that a provider might not report data for *every* minute within an hour. Therefore, such a request might cover more chart bars, depending on the available data.
+The number of bars on the chart’s timeframe covered by a lower-timeframe request varies with the number of intrabars available for each chart bar. For example, if a script running on a 60-minute chart uses a `request.*()` call that requests data from the 1-minute timeframe, that call can retrieve data for up to 60 intrabars per chart bar. If the call uses the argument `calc_bars_count = 100000`, the minimum number of chart bars covered by the request is 1666, because 100000 / 60 = 1666.67. However, a provider might not report data for *every* minute within an hour. Therefore, such a request might cover more chart bars, depending on the available data.
 
 ### Tuple element limit
 
@@ -372,7 +372,7 @@ Pine Script collections ([arrays](../language/arrays.md), [matrices](../language
 
 References to past values using the `[]` [history-referencing operator](../language/operators.md#-history-referencing-operator) are dependent on the size of the [historical buffer](../language/execution_model.md#historical-buffers) maintained by the Pine Script runtime, which is limited to a maximum of 5000 bars for most series. Some built-in series like `open`, `high`, `low`, `close`, and `time` have larger historical buffers that can reference up to 10,000 bars.
 
-If a script references values beyond the historical buffer’s limit, it causes a runtime error. For more information about this error, refer to [this section](https://www.tradingview.com/pine-script-docs/error-messages/#the-requested-historical-offset-x-is-beyond-the-historical-buffers-limit-y) of the [Error messages](https://www.tradingview.com/pine-script-docs/error-messages/) page, which discusses the historical buffer and how to change its size using either the `max_bars_back()` function or the `max_bars_back` parameter of the `indicator()` or `strategy()` declaration statement.
+If a script references values beyond the historical buffer’s limit, it causes a runtime error. For more information about this error, refer to the error page [The requested historical offset (X) is beyond the historical buffer’s limit (Y)](../errors/RE10143.md), which discusses the historical buffer and how to change its size using either the `max_bars_back()` function or the `max_bars_back` parameter of the `indicator()` or `strategy()` declaration statement.
 
 Drawings using `xloc.bar_index` can be positioned a maximum of 10,000 bars in the past.
 

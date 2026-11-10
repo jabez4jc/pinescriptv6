@@ -352,7 +352,7 @@ input.source(defval, title, tooltip, inline, group, display, active, confirm) â†
 
 **Arguments**
 
-- `defval` (open/high/low/close/hl2/hlc3/ohlc4/hlcc4): Determines the default value of the input variable proposed in the script's "Settings/Inputs" tab, from where the user can change it.
+- `defval` (open/high/low/close/hl2/hlc3/ohlc4/hlcc4/volume): Determines the default value of the input variable proposed in the script's "Settings/Inputs" tab, from where the user can change it.
 - `title` (const string, optional): Title of the input. If not specified, the variable name is used as the input's title. If the title is specified, but it is empty, the name will be an empty string.
 - `tooltip` (const string, optional): The string that will be shown to the user when hovering over the tooltip icon.
 - `inline` (const string, optional): Combines all the input calls using the same argument in one line. The string used as an argument is not displayed. It is only used to identify inputs belonging to the same line.

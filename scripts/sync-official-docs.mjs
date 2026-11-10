@@ -257,12 +257,16 @@ async function loadReference() {
   const sandbox = { self: { webpackChunktradingview: { push: ([, mods]) => Object.assign(modules, mods) } } };
   vm.createContext(sandbox);
   for (const c of [...code.filter((_, i) => /\/en\./.test(scripts[i])), ...extra]) vm.runInContext(c, sandbox);
+  // The data module imports TradingView's i18n helper as `x=n(<id>)` and calls `x.t(...)`.
+  const tm = /(\w+)=\w+\((\d+)\)[^]*?\b\1\.t\(/.exec(String(modules[moduleId]));
+  if (!tm) throw new Error("i18n module not found (TradingView bundle layout changed)");
+  const i18nId = tm[2];
   const cache = {};
   const t = (_, o, s) => { let str = Array.isArray(s) ? s[0] : String(s); for (const [k, v] of Object.entries(o?.replace || {})) str = str.split(`{${k}}`).join(v); return str; };
   const req = (id) => {
     if (id in cache) return cache[id].exports;
     const mod = (cache[id] = { exports: {} });
-    if (!modules[id]) { mod.exports = id == 383636 ? { t } : [`<<missing string ${id}>>`]; return mod.exports; }
+    if (!modules[id]) { mod.exports = id == i18nId ? { t } : [`<<missing string ${id}>>`]; return mod.exports; }
     modules[id](mod, mod.exports, req);
     return mod.exports;
   };

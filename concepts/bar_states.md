@@ -30,6 +30,7 @@ It can be useful to initialize variables on the first bar only, e.g.:
 // Declare array and set its values on the first bar only.
 FILL_COLOR = color.green
 var fillColors = array.new<color>(0)
+
 if barstate.isfirst
     // Initialize the array elements with progressively lighter shades of the fill color.
     array.push(fillColors, color.new(FILL_COLOR, 70))

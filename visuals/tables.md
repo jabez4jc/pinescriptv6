@@ -4,219 +4,681 @@ Source: https://www.tradingview.com/pine-script-docs/visuals/tables/
 
 ## Introduction
 
-Tables are objects that can be used to position information in specific and fixed locations in a script's visual space. Contrary to all other plots or objects drawn in Pine Script®, tables are not anchored to specific bars; they *float* in a script's space, whether in overlay or pane mode, in studies or strategies, independently of the chart bars being viewed or the zoom factor used.
+*Tables* are [drawing objects](../language/type_system.md#drawing-types) that display text and colors within organized cells. They visually arrange cells in columns and rows, similar to a spreadsheet. Unlike other visuals in Pine Script®, tables do not anchor to specific bars or chart coordinates. Instead, scripts display each table drawing at one of nine *fixed positions* within a chart pane – one of the four corners, one of the midpoints between the corners, or the space’s center – or stack the tables vertically in the [bottom panel](#displaying-tables-in-the-bottom-panel). Tables do not move or vanish as users scroll or zoom on the chart; they consistently remain visible at their position until the script directly modifies or deletes them.
 
-Tables contain cells arranged in columns and rows, much like a spreadsheet. They are created and populated in two distincts steps:
+A script [creates and displays](#creating-and-displaying-tables) tables in two distinct steps:
 
-1. A table's structure and key attributes are defined using `table.new()`, which returns a table ID that acts like a pointer to the table, just like label, line, or array IDs do. The `table.new()` call will create the table object but does not display it.
-2. Once created, and for it to display, the table must be populated using one `table.cell()` call for each cell. Table cells can contain text, or not. This second step is when the width and height of cells are defined.
+- First, it must call the `table.new()` function to create a `table` object. The function call defines specific *base properties* of the table, including the table’s position, the number of columns and rows, and the default border and background colors, then returns the table’s reference (ID).
+- After creating the `table` object, the script can pass its ID in calls to the `table.cell()` function to populate and display each cell. Each call to the function defines the properties for *one* specific cell, including the cell’s text, colors, formatting, and size. The overall size of the table depends on the width and height of each displayed cell. See the [Sizing table cells](#sizing-table-cells) section to learn more.
 
-Most attributes of a previously created table can be changed using `table.set_*()` setter functions. Attributes of previously populated cells can be modified using `table.cell_set_*()` functions.
+Scripts can modify all base properties of a table, excluding the `force_overlay` setting, and the number of columns and rows, by passing the object’s ID to the built-in `table.set_*()` functions. Likewise, they can modify all properties of *individual cells* by passing the ID to either the `table.cell_set_*()` functions or to additional calls to the `table.cell()` function. Scripts can also *merge* a specific subset of a table’s cells via the `table.merge_cells()` function. Refer to the [Modifying table and cell properties](#modifying-table-and-cell-properties) and [Merging cells](#merging-cells) sections to learn more about these functions and how to use them.
 
-A table is positioned in an indicator's space by anchoring it to one of nine references: the four corners or midpoints, including the center. Tables are positioned by expanding the table from its anchor, so a table anchored to the `position.middle_right` reference will be drawn by expanding up, down and left from that anchor.
+A single script can display a maximum of *nine* tables at once – one for each available position. If a script creates a table using the same position as an existing table, it *replaces* the existing table with the new one. The contents of each table always reflect the *final* state of the table as of the *last* chart bar. Past states of the table, or any replaced tables, are *never visible*.
 
-Two modes are available to determine the width/height of table cells:
+> **Note:** Tables often require more computational resources than other types of drawings, especially if a script creates or updates them frequently across bars or populates many cells. See the [Updating tables only when necessary](#updating-tables-only-when-necessary) section below to learn the best practices for minimizing the resource demands of table drawings. The examples across this page also demonstrate these practices in action.
 
-- A default automatic mode calculates the width/height of cells in a column/row using the widest/highest text in them.
-- An explicit mode allows programmers to define the width/height of cells using a percentage of the indicator's available x/y space.
+## Creating and displaying tables
 
-Displayed table contents always represent the last state of the table, as it was drawn on the script's last execution, on the dataset's last bar. Contrary to values displayed in the Data Window or in indicator values, variable contents displayed in tables will thus not change as a script user moves his cursor over specific chart bars. For this reason, it is strongly recommended to always restrict execution of all `table.*()` calls to either the first or last bars of the dataset. Accordingly:
+To create a table, start by calling the `table.new()` function. The function creates a `table` object with specified base properties and returns its ID. The function’s signature is as follows:
 
-- Use the `var` keyword to declare tables.
-- Enclose all other calls inside an `if` `barstate.islast` block.
+```
+table.new(position, columns, rows, bgcolor, frame_color, frame_width, border_color, border_width, force_overlay) → series table
+```
 
-**Multiple tables can be used in one script, as long as they are each anchored to a different position. Each table object is identified by its own ID. Limits on the quantity of cells in all tables are determined by the total number of cells used in one script.**
+Where:
 
-## Creating tables
+- The `position`, `columns`, and `rows` parameters require arguments. Supplying arguments to all other parameters is optional.
+- The `position` parameter specifies the table’s position on the chart. It accepts one of the following `position.*` constants: `position.top_left`, `position.top_center`, `position.top_right`, `position.middle_left`, `position.middle_center`, `position.middle_right`, `position.bottom_left`, `position.bottom_center`, or `position.bottom_right`.
+- The `columns` parameter requires an “int” value specifying the maximum number of columns that the table can display.
+- The `rows` parameter requires an “int” value specifying the maximum number of rows that the table can display.
+- The `bgcolor` parameter sets the table’s main background color. If not specified, the default background color is `na` (invisible). If the table’s cells also have specified background colors, those colors *overlay* onto the table’s main background.
+- The `frame_color` parameter sets the color of the table’s *outer frame*. The default color is `na`.
+- The `frame_width` parameter sets the width of the frame, in pixels. It accepts an “int” value greater than or equal to 0. A value of 0 (the default) makes the frame invisible.
+- The `border_color` parameter sets the color of the inner borders *between* each table cell. The default color is `na`.
+- The `border_width` parameter sets the width of the inner borders, in pixels. It does not affect the table’s outer frame. It accepts an “int” value greater than or equal to 0. A value of 0 (the default) makes the borders invisible.
+- The `force_overlay` parameter accepts a “bool” value specifying which pane the table occupies when displayed on the chart. If `true`, the table appears on the main chart pane, even if the script occupies a separate pane. If `false`, it appears in the script’s pane. Users can *move* the table into a tab in the chart’s *bottom panel*, regardless of the `force_overlay` argument, by selecting “Move tables to bottom” from the script’s “More” menu. See the [Displaying tables in the bottom panel](#displaying-tables-in-the-bottom-panel) section to learn more.
 
-When creating a table using `table.new()`, three parameters are mandatory: the table's position and its number of columns and rows. Five other parameters are optional: the table's background color, the color and width of the table's outer frame, and the color and width of the borders around all cells, excluding the outer frame. All table attributes except its number of columns and rows can be modified using setter functions: `table.set_position()`, `table.set_bgcolor()`, `table.set_frame_color()`, `table.set_frame_width()`, `table.set_border_color()` and `table.set_border_width()`.
+The `table` object created by a `table.new()` call *does not* initially display any visuals, because it does not contain data for any *cells*. For the table to display visuals, the script must call the `table.cell()` function to define and populate at least one cell. The function has the following signature:
 
-Tables can be deleted using `table.delete()`, and their content can be selectively removed using `table.clear()`.
+```
+table.cell(table_id, column, row, text, width, height, text_color, text_halign, text_valign, text_size, bgcolor, tooltip, text_font_family, text_formatting) → void
+```
 
-When populating cells using `table.cell()`, you must supply an argument for four mandatory parameters: the table id the cell belongs to, its column and row index using indices that start at zero, and the text string the cell contains, which can be null. Other parameters are optional: the width and height of the cell, the text’s attributes (color, horizontal and vertical alignment, size, formatting), and the cell’s background color. All cell attributes can be modified using setter functions: `table.cell_set_text()`, `table.cell_set_width()`, `table.cell_set_height()`, `table.cell_set_text_color()`, `table.cell_set_text_halign()`, `table.cell_set_text_valign()`, `table.cell_set_text_size()`, `table.cell_set_text_formatting()`, and `table.cell_set_bgcolor()`.
+Where:
 
-Keep in mind that each successive call to `table.cell()` redefines **all** the cell's properties, deleting any properties set by previous `table.cell()` calls on the same cell.
+- The `table_id`, `column`, and `row` parameters require arguments. Supplying arguments to all other parameters is optional.
+- The `table_id` parameter requires the ID of the `table` object.
+- The `column` parameter specifies the column index of the cell to populate. It requires an “int” value from 0 to one less than the `columns` argument in the `table.new()` call. A value of 0 refers to the first column, 1 refers to the second, and so on.
+- The `row` parameter specifies the row index of the cell to populate. It requires an “int” value from 0 to one less than the `rows` argument in the `table.new()` call. A value of 0 refers to the table’s first row, 1 refers to the second, and so on.
+- The `text` parameter accepts a “string” argument specifying the text to display in the table’s cell. The default is an empty string.
+- The `width` parameter accepts a “float” value specifying the base width of the cell. A value greater than 0 sets the width as a percentage of the pane’s width if the table is on the chart, or as a proportion of the table’s total width if the table is in the bottom panel. A value of 0 (the default) specifies that the width automatically adjusts based on the cell’s text. The cell’s final width is the maximum of the base width and the widths of all other cells in the same column.
+- The `height` parameter accepts a “float” value specifying the base height of the cell. A value greater than 0 sets the height as a percentage of the pane’s height if the table is on the chart, or as a proportion of the total allocated height if the table is in the bottom panel. A value of 0 (the default) specifies that the height automatically adjusts based on the cell’s text. The cell’s final height is the maximum of the base height and the heights of all other cells in the same row.
+- The `text_color` parameter specifies the color of the displayed text. The default is `#363a45`.
+- The `text_halign` parameter sets the horizontal alignment of the cell’s text. The possible arguments are `text.align_left`, `text.align_center`, and `text.align_right`. The default is `text.align_center`.
+- The `text_valign` parameter sets the vertical alignment of the cell’s text. The possible arguments are `text.align_top`, `text.align_center`, and `text.align_bottom`. The default is `text.align_center`.
+- The `text_size` parameter sets the size of the cell’s text. It accepts an “int” value greater than or equal to 0 for specifying the size in typographic points, or one of the `size.*` built-in “string” constants for specifying a preset size. The `size.*` constants and the equivalent “int” sizes are as follows: `size.auto` (0), `size.tiny` (8), `size.small` (10), `size.normal` (14), `size.large` (20), and `size.huge` (36). The default is `size.normal`.
+- The `bgcolor` parameter controls the background color of the cell. The specified color *overlays* onto the table’s main background defined by the `table.new()` call. If the `bgcolor` argument of the `table.cell()` call is `na` (the default), the cell displays the table’s main background color. If the argument is a “color” value with zero transparency, the cell displays that color instead of the main background color. If the argument represents a partially transparent color, the cell displays a *mixture* between that color and the table’s main background color.
+- The `tooltip` parameter accepts a “string” value that defines the *tooltip* text for the cell. If not `na` or an empty string, the cell displays the specified text within a tooltip when the user hovers over the cell. The default is an empty string.
+- The `text_font_family` parameter specifies the font family of the cell’s main text. The possible arguments are `font.family_default` and `font.family_monospace`. The default is `font.family_default`.
+- The `text_formatting` parameter sets the formatting behavior of the displayed text. It accepts one of the `text.format_*` constants (`text.format_none`, `text.format_italic`, or `text.format_bold`) or an addition expression that combines formatting settings (e.g., `text.format_bold + text.format_italic` for bold, italicized text). The default is `text.format_none`.
 
-### Placing a single value in a fixed position
+> **Note:** The `table.cell_set_*()` setter functions can also populate table cells. However, these functions define only one specific cell property at a time. For consistency, we recommend using the `table.cell()` function to set a cell’s initial properties, then using additional calls to the function or to the `table.cell_set_*()` functions to update the cell as needed. See the [Modifying table and cell properties](#modifying-table-and-cell-properties) section below to learn more about updating cells.
 
-Let's create our first table, which will place the value of ATR in the upper-right corner of the chart. We first create a one-cell table, then populate that cell:
+The following example script demonstrates how to create and display a basic table. It displays a fixed, single-cell table at an input-specified position on the first chart bar. The script first calls the `table.new()` function to create the `table` object, then assigns the returned ID to the persistent `displayTable` variable. Then, within a `once` structure, the script passes the variable to a `table.cell()` call to populate the table’s cell with a [formatted string](../concepts/strings.md#formatting-strings) and display the result on the chart:
 
 ```pine
 //@version=6
-indicator("ATR", "", true)
-// We use `var` to only initialize the table on the first bar.
-var table atrDisplay = table.new(position.top_right, 1, 1)
-// We call `ta.atr()` outside the `if` block so it executes on each bar.
-myAtr = ta.atr(14)
+indicator("Creating and displaying tables demo", overlay = true, behind_chart = false)
+
+//@variable Sets the position of the table in the chart pane.
+//          The "string" values of the `position.*` constants (e.g., `"middle_center"`) appear as the input's options.
+string positionInput = input.string(
+    position.middle_center, "Position",
+    [
+        position.top_left,    position.top_center,    position.top_right,
+        position.middle_left, position.middle_center, position.middle_right,
+        position.bottom_left, position.bottom_center, position.bottom_right
+    ], tooltip = "Sets the table's position in the pane. The table does not move as you scroll or zoom on the chart."
+)
+
+//@variable  References a `table` object that can display up to one cell.
+//           This `table.new()` call **does not** display a table on the chart.
+//           It only creates an empty `table` object and sets the object's base properties.
+var table displayTable = table.new(positionInput, columns = 1, rows = 1, bgcolor = chart.fg_color)
+
+// This `once` structure executes its code block once, on the first bar.
+once
+    //@variable A formatted string containing the text to display in the table.
+    string displayText = str.format(
+        "Symbol: {0}\nTimeframe: {1}\nBars: {2}",
+        ticker.standard(syminfo.tickerid), timeframe.period, last_bar_index - bar_index + 1
+    )
+    // Call `table.cell()` to create the table's cell and display it on the chart.
+    // Without a call to this function, the script compiles but does not display any data.
+    table.cell(displayTable, column = 0, row = 0, text = displayText, text_color = chart.bg_color, text_size = 30)
+```
+
+Note that:
+
+- The `table.new()` call does not display any visuals; it only creates the `table` object and defines the object’s base properties. The table displays data only after the script populates its cell with the `table.cell()` call.
+- The script assigns the `table.new()` call to a persistent variable declared with the `var` keyword to prevent repeated table creation after the first bar. Without using the keyword, an alternative way to achieve the same effect in our example is to move the [variable declaration](../language/variable_declarations.md) into the `once` structure.
+- The [string input](../concepts/inputs.md#string-input) in the script displays the “string” values of the `position.*` constants as options. Programmers can use these strings directly in `table.new()` calls to set a table’s position.
+- The table does not move as the user scrolls or zooms on the chart. It remains fixed at the input-specified pane position, even while viewing the first chart bar.
+- The `table.cell()` call in this script does not specify a `width` or `height` argument. Therefore, the script sets the table to use the minimum width and height that accommodates the cell’s text. See the [Sizing table cells](#sizing-table-cells) section below for more information.
+- This script creates and populates the table on only a single bar because the data it displays *does not change* across bars. To display dynamic data in tables, the typical best approach is to use the `table.cell()` function or other `table.*()` setter functions inside [conditional structures](../language/conditional_structures.md) that execute code on the *last available bar* (i.e., where the `barstate.islast` value is `true`). See the [Modifying table and cell properties](#modifying-table-and-cell-properties) section to learn more about these functions and how to use them efficiently.
+
+A script *must* call the `table.cell()` function or other setter functions for *each cell* to display. If a script does not define data for a cell at least once, the table automatically *excludes* that cell from its display. Likewise, if the script does not define cell data for an entire row or column, the table automatically *omits* that row/column when possible.
+
+For example, the simple script below creates a table that can display up to three rows and three columns. It then uses one call to the `table.cell()` function to populate the table’s middle cell, but does not define data for the other cells. Consequently, the table displays only *one* cell rather than nine:
+
+```pine
+//@version=6
+indicator("Unpopulated cells demo")
+
+//@variable References a `table` object that can display up to three columns and three rows.
+//          The table includes a frame and cell borders to visually separate displayed cells.
+var table t = table.new(
+    position.middle_center, columns = 3, rows = 3,
+    frame_color = chart.fg_color, frame_width = 1,
+    border_color = chart.fg_color, border_width = 1
+)
+
+// On the first bar, call `table.cell()` as a method to populate the table's middle cell at column 1, row 1.
+// Although the table can display nine cells, it displays only one, because the other possible cells are not defined.
+once
+    t.cell(1, 1, "Col 1\nRow 1", text_color = color.white, text_size = 30, bgcolor = color.blue)
+```
+
+Note that:
+
+- Most built-in functions for [reference types](../language/type_system.md#reference-types), including tables, are callable as functions or [methods](../language/methods.md). This script calls the `table.cell()` function using *method syntax* for convenience. We also use method syntax across other examples on this page.
+
+To configure the table to display all possible cells, the script must call the `table.cell()` function separately for each one. The modified script below calls the function within nested `for` loops. The outer loop iterates over the table’s *column* indices, and the inner loop iterates over the *row* indices. Each iteration of the inner loop calls the function to populate the cell at the current column and row. The table in this version displays all nine cells, because the script directly defines data for each one:
+
+```pine
+//@version=6
+indicator("Populating all cells demo")
+
+//@variable References a `table` object that can display up to three columns and three rows.
+//          The table includes a frame and cell borders to visually separate displayed cells.
+var table t = table.new(
+    position.middle_center, columns = 3, rows = 3,
+    frame_color = chart.fg_color, frame_width = 1,
+    border_color = chart.fg_color, border_width = 1
+)
+
+once
+    // Loop through all column indices from 0 to 2.
+    for col = 0 to 2
+        // Loop through all row indices from 0 to 2 once for each column index.
+        for row = 0 to 2
+            //@variable A formatted string indicating the current column and row indices.
+            string displayText = str.format("Col {0}\nRow {1}", col, row)
+            // Define the cell at the `col` and `row` indices and populate it with the formatted text.
+            t.cell(col, row, displayText, text_color = color.white, text_size = 30, bgcolor = color.blue)
+```
+
+### Sizing table cells
+
+The total width and height of a table depend on the width and height of each displayed *cell*. The `width`, `height`, `text`, and `text_size` arguments in each call to the `table.cell()` function and the corresponding `table.cell_set_*()` functions affect the visual sizes of table cells. When a table displays on the *chart*, the script sizes each cell using the following logic:
+
+- If the `width` or `height` value specified for a cell is 0, the script sets the initial width or height of the cell to fit the horizontal or vertical span of the text, which depends on both the `text` and `text_size` values.
+- If the `width` or `height` value for a cell is a positive number, the script sets the initial width or height as a *percentage* of the chart pane’s total width or height. For example, a `width` value of 50 specifies that the cell is at least half (50%) of the width of the chart pane. The specified width/height takes precedence over the cell’s text; if the values are too small to fit the entire text, the cell shows only a *truncated portion* of the text.
+- After determining the initial width and height of a cell, the script checks the width of all other cells in the same column and the height of all other cells on the same row. If necessary, it then *increases* the cell’s width or height to align with the neighboring cells.
+- The directions in which the table expands the width and height of its cells depend on the table’s *position* in the pane. For instance, a table in the middle-center position of the pane expands in all directions, whereas a table in the bottom-right corner expands leftward and upward.
+
+> **Note:** Table cells follow *different* sizing rules when displayed in the chart’s *bottom panel*. Refer to the [Displaying tables in the bottom panel](#displaying-tables-in-the-bottom-panel) section below for details.
+
+The following script provides an interactive way to understand the sizing behavior of table cells on the chart. The script creates a single-cell table that displays the text from a [text area input](../concepts/inputs.md#text-area-input). It also includes other inputs to specify the text size, the cell width, the cell height, and the table’s chart position. The table expands in all possible directions from the input position based on the span of the rendered text, or the specified “Cell width” and “Cell height” inputs if their values are greater than 0:
+
+```pine
+//@version=6
+indicator("Sizing table cells demo")
+
+//@variable Sets the position of the table in the chart pane.
+string positionInput = input.string(
+    position.middle_center, "Position",
+    [
+        position.top_left,    position.top_center,    position.top_right,
+        position.middle_left, position.middle_center, position.middle_right,
+        position.bottom_left, position.bottom_center, position.bottom_right
+    ]
+)
+//@variable A string containing the text to display in the table. Uses "Lorem ipsum" placeholder text by default.
+string textInput = input.text_area(
+"""Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
+eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut
+enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor
+in reprehenderit in voluptate velit esse cillum dolore eu fugiat
+nulla pariatur. Excepteur sint occaecat cupidatat non proident,
+sunt in culpa qui officia deserunt mollit anim id est laborum."""
+)
+//@variable The size of the table's text, in typographic points. Use 0 for the "auto" size.
+int textSizeInput = input.int(24, "Text size", minval = 0)
+
+//@variable Specifies the width of the table cell. Use 0 to set the width based on the width of the text.
+int widthInput = input.int(0, "Cell width", minval = 0)
+//@variable Specifies the height of the table cell. Use 0 to set the height based on the height of the text.
+int heightInput = input.int(0, "Cell height", minval = 0)
+
+// Create and populate the table on the first bar.
+once
+    //@variable References a single-cell table with a blue default background.
+    table t = table.new(positionInput, 1, 1, bgcolor = color.blue)
+    // Populate the table's cell using the input values.
+    t.cell(
+        0, 0, textInput, widthInput, heightInput, color.white,
+        text_size = textSizeInput, text_halign = text.align_left
+    )
+```
+
+Note that:
+
+- The script uses a multiline literal string to set the text area input’s default value. The string automatically includes the newline control character for each separate line of text, without requiring the `\n` [escape sequence](../concepts/strings.md#escape-sequences). See the [Multiline strings](../concepts/strings.md#multiline-strings) section of the [Strings](../concepts/strings.md) page for more information.
+
+When explicitly sizing table cells with nonzero `width` and `height` arguments, we recommend configuring each cell’s dimensions carefully to ensure the total width and height of the table do not exceed 100% of the available space, and configuring the text in each cell to avoid truncation. If a table exceeds the available display space, or if a cell’s width or height percentage is too small to display the specified text, there is no way to view all of the table’s contents when displaying it on the chart. However, users *can* view all the contents by moving the table to the *bottom panel*. See the next section below to learn more.
+
+> **Note:** The *exact* horizontal and vertical span of a table varies with the user’s viewport, and tables are limited in the minimum cell width and height they can display. Consequently, in some cases, a table can span *past* the chart’s space even if both the total width and height are specified as 100%, especially if it contains many cells. To ensure the best results when programming tables, we recommend testing the visuals on multiple pane and viewport sizes.
+
+A common technique to fit multi-cell tables into a specified space is to divide the required total width and height of a table by the number of columns and rows it contains. For instance, if a table contains five columns, and the required total width is 50% of the pane, set each cell’s `width` value to 10 (50 / 5). If a table requires *non-uniform* cell sizes, one possible technique to set dimensions is to compute normalized width and height weights that sum to one, then multiply the weights by the table’s total required width/height percentage.
+
+For example, the advanced script below includes a [user-defined function](../language/user_defined_functions.md) named `calcCellDims()`, which creates an [array](../language/arrays.md) containing the cell width or height percentages for fitting a specified total pane percentage. The function divides elements from an array of arbitrary weights by the array’s sum to normalize them, then multiplies the elements by a total percentage to calculate the final width or height values. The script uses the function to calculate cell widths and heights for a multi-cell table on the chart. Each cell in the table displays formatted text indicating the cell’s final width and height percentages:
+
+```pine
+//@version=6
+indicator("Non-uniform cell sizing demo")
+
+//@function            Calculates an array of width or height percentages for sizing table cells.
+//@param numCells      The number of cells per row (for width) or column (for height).
+//@param totalPercent  The total percentage of the chart pane's width or height.
+//@param weights       Optional. The ID of an array containing a proportional weight for each cell.
+//                     If `na`, the function creates an array of uniform percentages.
+//@returns             The ID of an array of width or height percentages. The script can use the elements in
+//                     `table.cell()` calls to fit a multi-cell table within a specific percentage of the pane.
+calcCellDims(int numCells, float totalPercent, array<float> weights = na) =>
+    if na(weights)
+        array<float> result = array.new<float>(numCells, totalPercent / numCells)
+    else
+        array<float> result = array.new<float>()
+        float totalWt = weights.sum()
+        for weight in weights
+            float cellPercent = totalPercent * weight / totalWt
+            result.push(cellPercent)
+        result
+
+//@variable References an array containing relative weights for both the width and height of the table cells.
+//          These weights represent relative proportions of the table's display space.
+var array<float> cellWeights = array.from(1.0, 2.0, 3.0, 4.0)
+
+once
+    //@variable The number of columns and rows in the table.
+    int numColsRows = cellWeights.size()
+    //@variable References a table supporting `numColsRows` columns and rows, with visible cell borders.
+    table t = table.new(
+        position.middle_center, columns = numColsRows, rows = numColsRows,
+        bgcolor = chart.bg_color, border_color = chart.fg_color, border_width = 1
+    )
+    //@variable References an array containing the width and height percentages for each row and column.
+    array<float> cellPercents = calcCellDims(numColsRows, 90, cellWeights)
+    // Loop through the `cellPercents` array to get column indices and width values.
+    for [col, width] in cellPercents
+        // Loop through the array again, once for each column, to get the row index and height.
+        for [row, height] in cellPercents
+            //@variable A formatted string containing the calculated width and height of each cell.
+            string cellText = str.format("W: {0}%, H: {1}%", width, height)
+            // Define the cell at the `col` and `row` indices and display the `cellText` value.
+            table.cell(t, col, row, cellText, width = width, height = height, text_color = chart.fg_color)
+```
+
+### Displaying tables in the bottom panel
+
+When a user applies a table-drawing script to the chart, the tables appear in the script’s pane by default, or in the main chart pane if the `force_overlay` argument of the `table.new()` call is `true`. Users can then optionally display the tables within a *tab* in the chart’s *bottom panel* by selecting the “Move tables to bottom” option from the “More” menu in the script’s status line:
+
+Selecting the option moves all tables drawn by the script into the same tab in the bottom panel, regardless of which chart pane each table occupies. The user can move the tables back onto the chart at any time by selecting “Move tables to chart” from the script’s “More” menu, or from the *context menu* opened by a dropdown arrow in the tab’s header:
+
+Users can move the tables from more than one script into the bottom panel’s tab. However, the panel displays the tables from only **one** script at a time. To specify which script’s tables to analyze, select the script name from the list in the tab’s context menu:
+
+Tables use different positioning and sizing rules in the bottom panel, and often appear differently from how they appear on the chart. Key differences in the display behaviors include the following:
+
+- The panel stacks all tables *vertically* based on the *order* in which the script creates them, regardless of the `position` or `force_overlay` argument in each `table.new()` call. The *first* table created by the script automatically appears at the *top*, and the *last* table appears at the *bottom*.
+- Each table automatically *stretches horizontally* to at least the width of the panel, regardless of the `width` argument in the `table.cell()` calls.
+- The cells of tables in the bottom panel do not truncate displayed text to fit a specified width or height. They fit the entire text when possible. If a table’s text is too tall or wide to fit within the panel’s visible space, the panel adds vertical or horizontal scroll bars as necessary to make the full text viewable.
+- If a table contains more than one column, a positive `width` argument in each `table.cell()` call specifies the width of the cell as a relative *proportion* of the table’s total width rather than a percentage of the panel’s width. For example, suppose a two-column table defines a width of 10 for the cells in the first column and a width of 30 for those in the second. In this case, the first column spans approximately *one-fourth* (10 / (10 + 30)) of the table’s total width, and the second spans approximately *three-fourths* (30 / (10 + 30)) of the width.
+- If at least *one* `table.cell()` call includes a positive `height` argument, the corresponding table automatically stretches other necessary rows *vertically* to fit the allocated display space in the pane, and it treats the specified value as a relative proportion of the space’s height rather than a direct percentage. Otherwise, the table automatically uses the minimum amount of vertical space required to display the specified text.
+- The available vertical space for each table depends on the total number of tables and the rows that they contain. If a specified height proportion is *too small* for the text on a row, the table automatically adjusts its row height to fit the text.
+
+> **Note:** There are no script parameters for selectively activating this feature or moving tables to the bottom by default. When creating a script that displays tables, we recommend manually checking their outputs on the chart and in the bottom panel to confirm they appear as intended.
+
+The following example demonstrates how tables behave differently when moved to the bottom panel. The script below creates up to nine tables on the first bar, one for each `position.*` constant. It stores each `position.*` string in an [array](../language/arrays.md), then [loops](../language/loops.md) through a [slice](../language/arrays.md#slicing-arrays) of the array. On each loop iteration, the script calls `table.new()` to create a table that supports two columns and three rows, then populates it with `table.cell()` calls using defined widths and heights. The first row in each table includes a number indicating the table’s creation order, where 0 refers to the first one, as well as the string indicating the table’s chart position:
+
+```pine
+//@version=6
+indicator("Displaying tables in the bottom panel demo")
+
+//@variable Specifies the number of tables to draw.
+int tableNumInput = input.int(9, "# of tables to draw", 1, 9)
+
+once
+    //@variable References a slice of an array containing each position string.
+    //          The script loops through the slice and draws a table for each element.
+    array<string> positions = array.from(
+        position.bottom_left, position.bottom_center, position.bottom_right,
+        position.middle_left, position.middle_center, position.middle_right,
+        position.top_left,    position.top_center,    position.top_right
+    ).slice(0, tableNumInput)
+
+    //@variable The width of the first table column. The width increments by two on each loop iteration.
+    float col1Width = 5
+
+    // Loop over the indices and position strings in the `positions` array slice.
+    for [i, pos] in positions
+        //@variable References a two-column, three-row table with a thin black frame and inner borders.
+        table t = table.new(
+            pos, 2, 3, frame_color = #000000, frame_width = 1, border_color = #000000, border_width = 1
+        )
+        // Merge both cells on the first row.
+        t.merge_cells(0, 0, 1, 0)
+
+        // Increment the first column width by two, and subtract it from 30 to calculate the second column's width.
+        col1Width += 2
+        float col2Width = 30 - col1Width
+
+        // Populate the merged cell in the first row with text indicating the table's creation order.
+        // The cell uses a height of 10.
+        t.cell(
+            0, 0, str.format("Table {0} ({1})", i, pos), height = 10, text_color = #000000, bgcolor = color.silver
+        )
+        // Populate the other cells with row and column information.
+        // The second row uses a height of 5, and the third uses a height of 15.
+        t.cell(0, 1, "Col 0, Row 1", width = col1Width, height = 5,  text_color = #000000, bgcolor = color.aqua)
+        t.cell(1, 1, "Col 1, Row 1", width = col2Width, height = 5,  text_color = #000000, bgcolor = color.orange)
+        t.cell(0, 2, "Col 0, Row 2", width = col1Width, height = 15, text_color = #000000, bgcolor = color.lime)
+        t.cell(1, 2, "Col 1, Row 2", width = col2Width, height = 15, text_color = #000000, bgcolor = color.red)
+```
+
+Note that:
+
+- The script uses the `table.merge_cells()` function to merge the cells on each table’s first row. The merged cell inherits all properties, excluding width and height, from the *first cell* in the merge range (at column 0, row 0). See the [Merging cells](#merging-cells) section below to learn more about this function.
+
+When we apply the script to a chart, it displays all the tables in a separate chart pane at their specified positions by default. The total defined width and height of each table is 30. Therefore, when displaying in the pane, each table occupies approximately 30% of the pane’s total width and height:
+
+If we select “Move tables to bottom” from the script’s “More” menu, all tables move into a tab in the chart’s bottom panel, and their display behavior changes. Rather than appearing at the same relative positions in the panel, the tables stack vertically in order from first to last. Each table stretches horizontally to fit the tab, and the tab automatically allocates the necessary amount of vertical space required to display each one:
+
+Note that:
+
+- The columns in each table span a proportional amount of the table’s width when they display in the panel. For instance, the first table defines a width of 7 (5 + 2) for the first column and 23 (30 - 7) for the second. Therefore, the first column spans approximately 7 / 30 of the total width, and the second spans approximately 23 / 30 of the total width.
+- The rows in each table also span a proportional amount of the total allocated height when possible. However, the available height for each table depends on the total number of tables and their contents. If the bottom panel displays more than one table, it automatically adjusts the row heights to fit the space, because the `table.cell()` calls specify `height` arguments. If the panel displays enough tables to require scrolling, it sets each row to use the *minimum* height that fits the displayed text. To see this behavior in action, adjust the “# of tables to draw” input in the script’s “Settings/Inputs” tab.
+
+Tables in the bottom panel also process text differently from those on the chart. When a table displays on the chart, there is no direct way to interact with the table’s text. Users can only view the text or hover over cells to inspect defined tooltips. By contrast, when a table displays in the bottom panel, users can select any of the main text in the table and copy it to their clipboard. For instance, in the following image, we selected all the text in the first table from our example script. We can then copy the entire text at once and paste it elsewhere:
+
+Note that:
+
+- This behavior applies only to the *main text* in a table’s cells. Users can view any tooltips in a bottom-panel table by hovering over its cells, just like with tables on the chart, but they cannot select the text from those tooltips.
+
+## Modifying table and cell properties
+
+The `table` namespace features multiple *setter functions*, which enable scripts to update the data and visual properties of a table and its cells over time. Programmers often use these functions when creating tables that display dynamic “series” data, or when modifying the appearance of a table in response to specific conditions.
+
+The `table.set_*()` functions modify specific *base properties* of a table, including its position, frame settings, and border settings. The available `table.set_*()` functions are `table.set_bgcolor()`, `table.set_border_color()`, `table.set_border_width()`, `table.set_frame_color()`, `table.set_frame_width()`, and `table.set_position()`. Each of these functions has the following general signature:
+
+```
+function_name(table_id, table_property) → void
+```
+
+Where:
+
+- `function_name` is the function’s identifier.
+- The `table_id` parameter requires the ID of the `table` object.
+- `table_property` refers to the table’s base property to update. The corresponding parameter name in each function matches one of the parameters in the `table.new()` function (e.g., `position` for `table.set_position()`).
+
+For updating specific table *cells*, scripts can use either the `table.cell()` function or the `table.cell_set_*()` functions. Each successive call to these functions overwrites the current properties for a specific cell. The `table.cell()` function overwrites *all* cell properties at once. In essence, it redefines the cell entirely on each call. By contrast, each `table.cell_set_*()` function updates only *one* specific cell property, such as the cell’s width, height, text, or background color, while leaving all other properties unchanged.
+
+The available `table.cell_set_*()` functions include `table.cell_set_bgcolor()`, `table.cell_set_width()`, `table.cell_set_height()`, `table.cell_set_text()`, `table.cell_set_text_color()`, `table.cell_set_text_size()`, `table.cell_set_text_halign()`, `table.cell_set_text_valign()`, `table.cell_set_text_font_family()`, `table.cell_set_text_formatting()`, and `table.cell_set_tooltip()`. The general signature for each of these functions is as follows:
+
+```
+function_name(table_id, column, row, cell_property) → void
+```
+
+Where:
+
+- `function_name` is the function’s identifier.
+- The `table_id` parameter requires the ID of the `table` object.
+- The `column` parameter requires the column index of the cell to modify. The index of the first column is 0, and the index of the last is one less than the `columns` argument of the `table.new()` call.
+- The `row` parameter requires the row index of the cell to modify. The index of the first row is 0, and the index of the last is one less than the `rows` argument of the `table.new()` call.
+- `cell_property` refers to the cell property to update. The corresponding parameter name in each function matches one of the parameters of the `table.cell()` function (e.g., `text` for `table.cell_set_text()`).
+
+To learn more about the `table.cell()` function and its signature, refer to the [Creating and displaying tables](#creating-and-displaying-tables) section above.
+
+When using any of these functions to update a table, remember that only the *latest state* of the table, as of the *last available bar*, is visible to the user. All previous states of a table are **never visible**. Therefore, updating tables *before* the last available bar is typically **unnecessary**. Furthermore, updating tables across a chart’s history can significantly *increase* the script’s runtime requirements, especially if the tables display many dynamic strings or colors.
+
+The most efficient way to populate a table with dynamic data is to call the `table.set_*()`, `table.cell()`, or `table.cell_set_*()` functions only on the bars where the output is *visible*, i.e., the last historical bar or the current realtime bar. Restricting these calls to the latest available bar avoids consuming resources on repeated display updates that users cannot view. The simplest approach to achieve this effect is to place the setter calls that must work across bars into an `if` structure that uses `barstate.islast` in its condition. If the table’s outputs depend on data from previous historical bars, use [variables](../language/variable_declarations.md), [collections](../language/type_system.md#collections), or [history-referencing operations](../language/operators.md#-history-referencing-operator) to make necessary data available for the setter calls on the last bar.
+
+The following example script calculates the change in the `close` series over multiple lengths and displays formatted values in a two-column, nine-row table. It performs all calculations on the *last bar*, within an `if` structure that uses `barstate.islast` as the condition. On the first bar where the condition is `true`, the script executes multiple `table.cell()` calls within a nested `once` structure to set the initial properties of all the table cells. Then, within a loop that executes on all bars where the [if structure](../language/conditional_structures.md#if-structure) executes, the script calculates the change values and updates all cells after the first in the second column. The script calls the `table.cell_set_text()` function to update each cell’s text, and it calls `table.cell_set_bgcolor()` to update the background color:
+
+```pine
+//@version=6
+indicator("Modifying table and cell properties demo", overlay = true, behind_chart = false)
+
 if barstate.islast
-    // We only populate the table on the last bar.
-    table.cell(atrDisplay, 0, 0, str.tostring(myAtr))
+    //@variable References a `table` object that supports two columns and nine rows.
+    var table t = table.new(
+        position.top_right, 2, 9, bgcolor = #ffffff, frame_color = #000000, frame_width = 1,
+        border_color = #000000, border_width = 1
+    )
+    // This `once` structure's block executes only on the first bar where `barstate.islast` is `true`.
+    once
+        // Set the column header cells with fixed, black text and defaults for all other properties.
+        t.cell(0, 0, "Length", text_color = #000000, bgcolor = #cccccc)
+        t.cell(1, 0, "Change", text_color = #000000, bgcolor = #cccccc)
+
+        //@variable The offset value for the row header text. The value starts at 1 and then doubles within a loop.
+        int offset = 1
+        // Loop to initialize the cells for the remaining eight rows.
+        for row = 1 to 8
+            // Set the cells in the first column to display the `offset` value with black text.
+            t.cell(0, row, str.tostring(offset), text_color = #000000)
+            // Set the cells in the second column to use a white text color. No text is initially specified.
+            t.cell(1, row, text_color = #ffffff)
+            offset *= 2
+
+    // The code in this scope executes on all bars where `barstate.islast` is `true`.
+
+    //@variable The bar offset for `[]` operations. The value starts at 1 and then doubles within a loop.
+    int offset = 1
+
+    // Loop through all row indices after the first.
+    for row = 1 to 8
+        // Calculate the absolute and percentage difference between the current `close` value and the
+        // value from `offset` bars back.
+        float change = close - close[offset]
+        float changePct = 100 * change / close[offset]
+        // Multiply the `offset` value by two for the next iteration.
+        offset *= 2
+
+        // Both of these function calls modify a specific property of a cell without overwriting other properties.
+
+        // Set the cell in the second column on the row to display formatted text representing the current change values.
+        t.cell_set_text(1, row, str.format("{0,number,0.0000} ({1,number,0.000}%)", change, changePct))
+        // Set the cell's background to teal if the `change` value is positive, and maroon otherwise.
+        t.cell_set_bgcolor(1, row, change > 0 ? color.teal : color.maroon)
 ```
 
 Note that:
 
-- We use the `var` keyword when creating the table with `table.new()`.
-- We populate the cell inside an `if` `barstate.islast` block using `table.cell()`.
-- When populating the cell, we do not specify the `width` or `height`. The width and height of our cell will thus adjust automatically to the text it contains.
-- We call `ta.atr(14)` prior to entry in our `if` block so that it evaluates on each bar. Had we used `str.tostring(ta.atr(14))` inside the `if` block, the function would not have evaluated correctly because it would be called on the dataset's last bar without having calculated the necessary values from the previous bars.
+- This script can produce the same result by calling the `table.cell()` function instead of the `table.cell_set_text()` and `table.cell_set_bgcolor()` functions. However, each call to the function overwrites *all* properties of a cell. If a property is not specified, the `table.cell()` function uses the default property when updating a cell. Therefore, all necessary properties must be *explicitly defined* in each call. For instance, if we replace the two `table.cell_set_*()` calls with a single `table.cell()` call, the script displays the same result only if the call includes `text`, `bgcolor`, *and* `text_color` arguments.
 
-Let's improve the usability and aesthethics of our script:
+## Clearing cells
+
+Scripts can *clear* specific cells within a table by using the `table.clear()` function. The function deletes the properties for one or more cells within a rectangular region from a starting column and row to an ending column and row. The function’s signature is as follows:
+
+```
+table.clear(table_id, start_column, start_row, end_column, end_row) → void
+```
+
+Where:
+
+- The `table_id` parameter requires the ID of the `table` object.
+- The `start_column` parameter requires the column index of the first cell to clear. The argument must be less than or equal to the `end_column` value.
+- The `start_row` parameter requires the row index of the first cell to clear. The argument must be less than or equal to the `end_row` value.
+- The `end_column` parameter requires the column index of the last cell to clear. The argument must be greater than or equal to the `start_column` value.
+- The `end_row` parameter requires the row index of the last cell to clear. The argument must be greater than or equal to the `start_row` value.
+
+This function is often useful if a script must dynamically reduce the number of cells in a table’s display. After a script clears a table cell with this function, the cell’s data is no longer defined. Therefore, the table automatically *excludes* the cell from its display. If the call clears an entire row or column, the table automatically omits that row/column when possible. To display a cell after clearing it, the script must *repopulate* the cell by calling the `table.cell()` or `table.cell_set_*()` functions.
+
+The following example script demonstrates the behavior of cleared cells. The script populates and then clears a table in 50-bar cycles, starting on the last bar. The script first creates a table that supports 10 columns and 5 rows. It then calls the `table.cell()` function to populate one specific cell on each successive bar. After the script populates all 50 cells, it calls the `table.clear()` function on the next bar to clear the cells, then begins populating the table again:
 
 ```pine
 //@version=6
-indicator("ATR", "", true)
-atrPeriodInput = input.int(14,  "ATR period", minval = 1, tooltip = "Using a period of 1 yields True Range.")
+indicator("Clearing cells demo")
 
-var table atrDisplay = table.new(position.top_right, 1, 1, bgcolor = color.gray, frame_width = 2, frame_color = color.black)
-myAtr = ta.atr(atrPeriodInput)
 if barstate.islast
-    table.cell(atrDisplay, 0, 0, str.tostring(myAtr, format.mintick), text_color = color.white)
+    //@variable References a table that supports 10 columns and 5 rows.
+    var table t = table.new(position.middle_center, 10, 5, chart.bg_color, chart.fg_color, 1, chart.fg_color, 1)
+
+    //@variable The number of cells currently populated by `table.cell()` calls.
+    var int cellCount = 0
+
+    // If the `cellCount` value is 50, clear all cells from column 0, row 0 to column 9, row 4, then reset the value to 0.
+    if cellCount == 50
+        t.clear(start_column = 0, start_row = 0, end_column = 9, end_row = 4)
+        cellCount := 0
+
+    // Calculate the column and row indices of the cell to populate. The script populates each row from left to right.
+    int col = cellCount % 10
+    int row = int(cellCount / 10)
+    //@variable The color of the current cell, based on the direction of the latest change in the `close` value.
+    color cellColor = close > close[1] ? color.aqua : close < close[1] ? color.fuchsia : na
+    //@variable A string representing the current bar's opening date and time in the exchange time zone.
+    //          Each cell displays this text in a tooltip.
+    string cellTooltip = str.format_time(time)
+    // Populate the cell at the `col` and `row` indices.
+    t.cell(col, row, str.tostring(close), text_color = #000000, bgcolor = cellColor, tooltip = cellTooltip)
+    // Increment the `cellCount` value by one.
+    cellCount += 1
 ```
 
 Note that:
 
-- We used `table.new()` to define a background color, a frame color and its width.
-- When populating the cell with `table.cell()`, we set the text to display in white.
-- We pass `format.mintick` as a second argument to the `str.tostring()` function to restrict the precision of ATR to the chart's tick precision.
-- We now use an input to allow the script user to specify the period of ATR. The input also includes a tooltip, which the user can see when he hovers over the “i” icon in the script's “Settings/Inputs” tab.
+- The table does not initially display any data after each `table.clear()` call, because the call in our example erases the properties of every cell. The table displays data again only after the `table.cell()` call. The table gradually expands its display across bars to show all columns and rows as the script redefines them.
 
-### Coloring the chart's background
+## Merging cells
 
-This example uses a one-cell table to color the chart's background on the bull/bear state of RSI:
+Scripts can *merge* multiple cells within a table into a single cell by calling the `table.merge_cells()` function. The function merges all cells within a rectangular region from a starting column and row to an ending column and row. After a table merges cells, it cannot separate those cells or merge them with other cells. The final merged cell inherits all properties from the *first cell* in the merge range, excluding its width and height. The dimensions of the merged cell depend on the width and height of all neighboring cells in the columns and rows covered by the range.
+
+The signature of the `table.merge_cells()` function is as follows:
+
+```
+table.merge_cells(table_id, start_column, start_row, end_column, end_row) → void
+```
+
+Where:
+
+- The `table_id` parameter requires the ID of the `table` object.
+- The `start_column` parameter requires the column index of the first cell to merge. The argument must be less than or equal to the `end_column` value.
+- The `start_row` parameter requires the row index of the first cell to merge. The argument must be less than or equal to the `end_row` value.
+- The `end_column` parameter requires the column index of the final cell to merge. The argument must be greater than or equal to the `start_column` value.
+- The `end_row` parameter requires the row index of the final cell to merge. The argument must be greater than or equal to the `start_row` value.
+
+> **Note:** A merged cell *ignores* the text and styling of all cells in the merge range except for the first. Therefore, to modify the properties of a merged cell, scripts must call the `table.cell()` or `table.cell_set_*()` functions using the **first** column and row indices in the merge range. For instance, to update a merged cell from column 0, row 1 to column 2, row 3, the calls must use 0 as the `column` argument and 1 as the `row` argument. Using other indices from the merge range *does not* affect the cell.
+
+The following example script demonstrates the behavior of merged cells. On the first bar, the script creates a five-column, five-row table with a white background and a black border and frame, then populates its cells with single-character alphabetical strings from `"A"` to `"Y"`. The script calls the `table.merge_cells()` function as a [method](../language/methods.md) to merge all cells from an input start column and row to an input end column and row. It also uses the `table.cell_set_bgcolor()` function to color the background of the first cell in the merge range blue:
 
 ```pine
 //@version=6
-indicator("Chart background", "", true)
-bullColorInput = input.color(color.new(color.green, 95), "Bull", inline = "1")
-bearColorInput = input.color(color.new(color.red, 95), "Bear", inline = "1")
-// ————— Function colors chart bg on RSI bull/bear state.
-colorChartBg(bullColor, bearColor) =>
-    var table bgTable = table.new(position.middle_center, 1, 1)
-    float r = ta.rsi(close, 20)
-    color bgColor = r > 50 ? bullColor : r < 50 ? bearColor : na
-    if barstate.islast
-        table.cell(bgTable, 0, 0, width = 100, height = 100, bgcolor = bgColor)
+indicator("Merging cells demo")
 
-colorChartBg(bullColorInput, bearColorInput)
+// Define inputs specifying the indices of the cells to merge.
+int startColInput = input.int(1, "Start column", 0, 4)
+int startRowInput = input.int(1, "Start row", 0, 4)
+int endColInput   = input.int(3, "End column", 0, 4)
+int endRowInput   = input.int(3, "End row", 0, 4)
+
+if barstate.isfirst
+    //@variable References a table that can display five rows and five columns.
+    var table t = table.new(position.middle_center, 5, 5, #ffffff, #000000, 1, #000000, 1)
+
+    // Merge all cells from the specified starting column and row to the ending column and row.
+    // This function can define merged cell positions before or after any `table.cell()` calls.
+    t.merge_cells(startColInput, startRowInput, endColInput, endRowInput)
+
+    //@variable References an array of single-character strings.
+    var array<string> cellStrings = str.split("ABCDEFGHIJKLMNOPQRSTUVWXY", "")
+    // Loop through the `cellStrings` array's indices and elements and populate the table.
+    for [i, letter] in cellStrings
+        // Calculate the column and row index for the cell based on the `i` value.
+        // These indices access cells in order from left to right, moving to the next row for each multiple of five.
+        int col = i % 5
+        int row = math.floor(i / 5)
+        // Populate the cell at the `col` and `row` indices.
+        t.cell(col, row, letter, width = 16, height = 16, text_color = #000000)
+        // Set the background color of the first cell in the merge range to blue.
+        // This setter call causes the entire merged cell to inherit a blue background.
+        if col == startColInput and row == startRowInput
+            t.cell_set_bgcolor(col, row, color.blue)
 ```
 
 Note that:
 
-- We provide users with inputs allowing them to specify the bull/bear colors to use for the background, and send those input colors as arguments to our `colorChartBg()` function.
-- We create a new table only once, using the `var` keyword to declare the table.
-- We use `table.cell()` on the last bar only, to specify the cell's properties. We make the cell the width and height of the indicator's space, so it covers the whole chart.
+- The merged cell automatically displays the text and background color of the first cell in the merge range. It ignores the properties of all other cells in the range, even though the script also defines them with the looped `table.cell()` call.
+- If the start and end column indices are equal, as well as the start and end row indices, the `table.merge_cells()` call does not affect the table’s appearance, because the merge range spans only a single cell. If the start row or column index is greater than the end index, a runtime error occurs, because tables merge cells exclusively from top to bottom and left to right.
+- The `table.merge_cells()` function can merge cells *before or after* the script defines their properties with the `table.cell()` function. In this example, we placed the call before the loop that executes the `table.cell()` calls. Moving the call after the loop achieves the same effect.
 
-### Creating a display panel
+## Deleting and replacing tables
 
-Tables are ideal to create sophisticated display panels. Not only do they make it possible for display panels to always be visible in a constant position, they provide more flexible formatting because each cell's properties are controlled separately: background, text color, size and alignment, etc.
+Tables *persist* indefinitely on the chart or in the bottom panel until a script deletes them. Scripts can delete a table, if necessary, by doing either of the following:
 
-Here, we create a basic display panel showing a user-selected quantity of MAs values. We display their period in the first column, then their value with a green/red/gray background that varies with price's position with regards to each MA. When price is above/below the MA, the cell's background is colored with the bull/bear color. When the MA falls between the current bar's `open` and `close`, the cell's background is of the neutral color:
+- Calling the `table.delete()` function. Each call explicitly deletes a `table` object and removes its ID. Any variables or collections that reference the table store `na` after the call. This function is most useful if a script must display a table on only *some* of the latest bars.
+- Calling the `table.new()` function with the same `position` argument as a previous call. Each successive call to the function automatically *deletes* the existing table using the specified position and *replaces* it with a new `table` object that displays cells at that position. Replacing a table can be useful if a script must increase the number of cells in a table or dynamically change merged cell ranges.
+
+The following example script uses tables to create a right-to-left scrolling display of colors indicating the direction of changes in the `close` series over the latest 30 bars. The script [uses an array as a queue](../language/arrays.md#using-an-array-as-a-queue) to store the change direction values. Then, on the last historical bar or the current realtime bar, it creates a new `table` object and loops through the array to populate the cells. It populates the second row’s cells by calling the `table.cell()` function for each element that does not match the previous element. For consecutive elements that have the same value, the script calls `table.merge_cells()` instead to merge all the corresponding cells in the second row, preventing the table’s black border from appearing between each one.
+
+Each execution of the `table.new()` call automatically replaces the table from the previous bar with a new one, because the call uses an unchanging `position` argument. Replacing the table on each realtime bar is useful for our intended effect in this case, as the script cannot dynamically overwrite the merged cell ranges in a single table across bars:
 
 ```pine
 //@version=6
-indicator("Price vs MA", "", true)
+indicator("Replacing tables demo", overlay = true, behind_chart = false)
 
-var string GP1 = "Moving averages"
-int     masQtyInput    = input.int(20, "Quantity", minval = 1, maxval = 40, group = GP1, tooltip = "1-40")
-int     masStartInput  = input.int(20, "Periods begin at", minval = 2, maxval = 200, group = GP1, tooltip = "2-200")
-int     masStepInput   = input.int(20, "Periods increase by", minval = 1, maxval = 100, group = GP1, tooltip = "1-100")
+//@variable References an array whose elements represent the direction of the latest 30 `close` values.
+var array<float> directions = array.new<float>(30, 0)
+// Push the sign of the change in the current `close` value into the end of the array, and remove the first element.
+directions.push(math.sign(close - close[1]))
+directions.shift()
 
-var string GP2 = "Display"
-string  tableYposInput = input.string("top", "Panel position", inline = "11", options = ["top", "middle", "bottom"], group = GP2)
-string  tableXposInput = input.string("right", "", inline = "11", options = ["left", "center", "right"], group = GP2)
-color   bullColorInput = input.color(color.new(color.green, 30), "Bull", inline = "12", group = GP2)
-color   bearColorInput = input.color(color.new(color.red, 30), "Bear", inline = "12", group = GP2)
-color   neutColorInput = input.color(color.new(color.gray, 30), "Neutral", inline = "12", group = GP2)
-
-//@variable The table's `position.*` argument based on the chosen `tableXposInput` and `tableYposInput`.
-var string tablePosition = switch
-    tableXposInput == "left"   and tableYposInput == "top"    => position.top_left
-    tableXposInput == "left"   and tableYposInput == "middle" => position.middle_left
-    tableXposInput == "left"   and tableYposInput == "bottom" => position.bottom_left
-    tableXposInput == "center" and tableYposInput == "top"    => position.top_center
-    tableXposInput == "center" and tableYposInput == "middle" => position.middle_center
-    tableXposInput == "center" and tableYposInput == "bottom" => position.bottom_center
-    tableXposInput == "right"  and tableYposInput == "top"    => position.top_right
-    tableXposInput == "right"  and tableYposInput == "middle" => position.middle_right
-    tableXposInput == "right"  and tableYposInput == "bottom" => position.bottom_right
-
-var table panel = table.new(tablePosition, 2, masQtyInput + 1)
 if barstate.islast
-    // Table header.
-    table.cell(panel, 0, 0, "MA", bgcolor = neutColorInput)
-    table.cell(panel, 1, 0, "Value", bgcolor = neutColorInput)
+    // Call `table.new()` to create a new 30-column, 2-row `table` object on each bar.
+    // Because each successive execution of this call uses the same position, it automatically deletes the previous
+    // table and creates a new table to populate.
+    table t = table.new(position.bottom_right, 30, 2, #ececec, #000000, 1, #000000, 1)
 
-int period = masStartInput
-for i = 1 to masQtyInput
-    // ————— Call MAs on each bar.
-    float ma = ta.sma(close, period)
-    // ————— Only execute table code on last bar.
-    if barstate.islast
-        // Period in left column.
-        table.cell(panel, 0, i, str.tostring(period), bgcolor = neutColorInput)
-        // If MA is between the open and close, use neutral color. If close is lower/higher than MA, use bull/bear color.
-        bgColor = close > ma ? open < ma ? neutColorInput : bullColorInput : open > ma ? neutColorInput : bearColorInput
-        // MA value in right column.
-        table.cell(panel, 1, i, str.tostring(ma, format.mintick), text_color = color.black, bgcolor = bgColor)
-    period += masStepInput
+    // Declare variables to track the starting index and previous direction state for setting merged cells in the loop.
+    int mergeStart = 0
+    float prevDir = 0
+
+    // Loop through the `directions` array.
+    for [i, dir] in directions
+        // Set each cell in the first row to display the analyzed bar offset.
+        t.cell(i, 0, str.tostring(29 - i), width = 2, height = 5, text_color = #000000)
+        // Set the properties of the first cell on the second row and set `prevDir` during the first iteration.
+        if i == 0
+            t.cell(i, 1, height = 10, bgcolor = dir == 1 ? color.green : dir == -1 ? color.red : color.gray)
+            prevDir := dir
+            continue
+        // On each successive iteration where the `dir` and `prevDir` values do not match, merge the second row's
+        // cells from the `mergeStart` column to the `i - 1` column, update the `mergeStart` and `prevDir` variables,
+        // then set the properties of the cell at column `i` cell in the second row.
+        if dir != prevDir
+            t.merge_cells(mergeStart, 1, i - 1, 1)
+            mergeStart := i
+            prevDir := dir
+            t.cell(i, 1, height = 10, bgcolor = dir == 1 ? color.green : dir == -1 ? color.red : color.gray)
+    // Merge all remaining cells if the `mergeStart` index is less than the final column index.
+    if mergeStart < 29
+        t.merge_cells(mergeStart, 1, 29, 1)
 ```
-
-Note that:
-
-- Users can select the table's position from the inputs, as well as the bull/bear/neutral colors to be used for the background of the right column's cells.
-- The table's quantity of rows is determined using the number of MAs the user chooses to display. We add one row for the column headers.
-- Even though we populate the table cells on the last bar only, we need to execute the calls to `ta.sma()` on every bar so they produce the correct results. The compiler warning that appears when you compile the code can be safely ignored.
-- We separate our inputs in two sections using `group`, and join the relevant ones on the same line using `inline`. We supply tooltips to document the limits of certain fields using `tooltip`.
-
-### Displaying a heatmap
-
-Our next project is a heatmap, which will indicate the bull/bear relationship of the current price relative to its past values. To do so, we will use a table positioned at the bottom of the chart. We will display colors only, so our table will contain no text; we will simply color the background of its cells to produce our heatmap. The heatmap uses a user-selectable lookback period. It loops across that period to determine if price is above/below each bar in that past, and displays a progressively lighter intensity of the bull/bear color as we go further in the past:
-
-```pine
-//@version=6
-indicator("Price vs Past", "", true)
-
-var int MAX_LOOKBACK = 300
-
-int     lookBackInput  = input.int(150, minval = 1, maxval = MAX_LOOKBACK, step = 10)
-color   bullColorInput = input.color(#00FF00ff, "Bull", inline = "11")
-color   bearColorInput = input.color(#FF0080ff, "Bear", inline = "11")
-
-// ————— Function draws a heatmap showing the position of the current `_src` relative to its past `_lookBack` values.
-drawHeatmap(src, lookBack) =>
-    // float src     : evaluated price series.
-    // int   lookBack: number of past bars evaluated.
-    // Dependency: MAX_LOOKBACK
-
-    // Force historical buffer to a sufficient size.
-    max_bars_back(src, MAX_LOOKBACK)
-    // Only run table code on last bar.
-    if barstate.islast
-        var heatmap = table.new(position.bottom_center, lookBack, 1)
-        for i = 1 to lookBackInput
-            float transp = 100. * i / lookBack
-            if src > src[i]
-                table.cell(heatmap, lookBack - i, 0, bgcolor = color.new(bullColorInput, transp))
-            else
-                table.cell(heatmap, lookBack - i, 0, bgcolor = color.new(bearColorInput, transp))
-
-drawHeatmap(high, lookBackInput)
-```
-
-Note that:
-
-- We define a maximum lookback period as a `MAX_LOOKBACK` constant. This is an important value and we use it for two purposes: to specify the number of columns we will create in our one-row table, and to specify the lookback period required for the `_src` argument in our function, so that we force Pine Script to create a historical buffer size that will allow us to refer to the required quantity of past values of `_src` in our `for` loop.
-- We offer users the possibility of configuring the bull/bear colors in the inputs and we use `inline` to place the color selections on the same line.
-- Inside our function, we enclose our table-creation code in an `if` `barstate.islast` construct so that it only runs on the last bar of the chart.
-- The initialization of the table is done inside the `if` statement. Because of that, and the fact that it uses the `var` keyword, initialization only occurs the first time the script executes on a last bar. Note that this behavior is different from the usual `var` declarations in the script's global scope, where initialization occurs on the first bar of the dataset, at `bar_index` zero.
-- We do not specify an argument to the `text` parameter in our `table.cell()` calls, so an empty string is used.
-- We calculate our transparency in such a way that the intensity of the colors decreases as we go further in history.
-- We use dynamic color generation to create different transparencies of our base colors as needed.
-- Contrary to other objects displayed in Pine scripts, this heatmap's cells are not linked to chart bars. The configured lookback period determines how many table cells the heatmap contains, and the heatmap will not change as the chart is panned horizontally, or scaled.
-- The maximum number of cells that can be displayed in the script’s visual space will depend on your viewing device's resolution and the portion of the display used by your chart. Higher resolution screens and wider windows will allow more table cells to be displayed.
 
 ## Tips
 
-- When creating tables in strategy scripts, keep in mind that unless the strategy uses `calc_on_every_tick = true`, table code enclosed in `if` `barstate.islast` blocks will not execute on each realtime update, so the table will not display as you expect.
-- Keep in mind that successive calls to `table.cell()` overwrite the cell's properties specified by previous `table.cell()` calls. Use the setter functions to modify a cell's properties.
-- Remember to control the execution of your table code wisely by restricting it to the necessary bars only. This saves server resources and your charts will display faster, so everybody wins.
+Follow these tips to use tables efficiently, and to display updates to tables dynamically in strategies.
+
+### Updating tables only when necessary
+
+As mentioned in the introduction, tables often require more computational resources than other types of drawings, especially if a script creates or updates them frequently or populates many cells. In some cases, excessive table creation or updates can significantly increase a script’s runtime requirements.
+
+To minimize resource use when working with tables, ensure the script creates and updates them **only when necessary**. Below are the best practices for optimizing table performance:
+
+- If the table or cell properties do not require changes across bars, place all the required `table.*()` function calls inside a [conditional structure](../language/conditional_structures.md) that executes its local block on a **single bar**. All table visuals persist across executions until explicitly deleted or replaced. Therefore, calling `table.*()` functions repeatedly is **not** necessary to display fixed visuals continuously.
+- If any table or cell properties do require changes across bars, place the required `table.set_*()`, `table.cell()`, or `table.cell_set_*()` calls inside a conditional structure that executes only on the **last** available bar, where the result is **visible**. Users cannot view the past states of tables. Therefore, updating tables repeatedly across history is an unnecessary waste of runtime resources.
+- When creating and modifying tables, it is typically best to assign the `table.new()` call to a persistent variable declared with the `var` keyword to prevent repeated table creation. Each successive call with the same `position` argument replaces any existing table at that position with a new one to populate, as explained above. Replacing tables when not required can cause excessive resource use.
+- If a script *must* replace a table over time to change its cell count, merged cells, etc., keep all successive `table.new()` calls inside a conditional structure that executes only on the *last bar*. Repeatedly recreating and repopulating tables across history can significantly elevate resource use.
+
+> **Tip:** Similar best practices can apply to other [drawing types](../language/type_system.md#drawing-types). For example, if a script draws a [label](text_and_shapes.md#labels) that always displays only the latest values from a series, limiting `label.new()` and `label.set_*()` calls to the latest bar, where the output is visible, can help improve script performance. See the [Profiling and optimization](../writing_scripts/profiling_and_optimization.md) page to learn more about runtime optimization techniques.
+
+### Displaying dynamic tables in strategies
+
+[Strategies](../concepts/strategies.md) differ from indicators in the way they execute across a dataset. By default, they execute only on the *closing tick* of each bar, regardless of whether that bar has a historical or realtime state. Consequently, with this behavior, if a strategy populates tables with data that can fluctuate during realtime bars, the tables *lag* behind the latest data while a bar is open and show new results only when the bar *closes*.
+
+For a strategy to update its tables or other drawings on each update to an open realtime bar, the script must execute on *each new tick* – not just each bar’s close. Programmers can configure a strategy to execute on each new tick by default by including `calc_on_every_tick = true` in the `strategy()` declaration statement. Script users can also override a strategy’s default calculation behavior and enable executions on each new tick by selecting “On realtime bar tick” in the strategy’s [Script execution](https://www.tradingview.com/support/solutions/43000786178/) settings.
+
+> **Note:** Enabling strategy executions on each realtime tick can cause the strategy’s orders to behave *differently* on realtime bars. Each new update from the data feed is a valid tick for filling orders on realtime bars, while executions on historical bars are limited to filling orders on chart prices or the prices from a lower timeframe. See the [`calc_on_every_tick`](../concepts/strategies.md#calc_on_every_tick) section of the [Strategies](../concepts/strategies.md) page for more information. If a script must place orders only after a realtime bar closes for historical consistency, regardless of this setting, include `barstate.isconfirmed` in the conditions that control the script’s [order placement commands](../concepts/strategies.md#order-placement-and-cancellation).
+
+The example strategy below places [market orders](../concepts/strategies.md#market-orders) to enter and close trades based on the value of a 14-length [RSI](https://www.tradingview.com/support/solutions/43000502338/). The script also draws a two-column, two-row table to display the current `strategy.equity` value and its one-bar change. The script includes `calc_on_every_tick = true` in the `strategy()` statement, enabling the table to update after each tick in a realtime bar by default. To promote consistency in the order logic across historical and realtime bars, the script uses the order placement commands inside an `if` structure that executes only when the `barstate.isconfirmed` value is `true`:
+
+```pine
+//@version=6
+strategy(
+    "Dynamic tables in strategies demo", calc_on_every_tick = true,
+    default_qty_type = strategy.percent_of_equity, default_qty_value = 2
+)
+
+//@variable The 14-length RSI of the `close` series.
+float rsi = ta.rsi(close, 14)
+
+// On a closed bar, place an entry market order if the RSI is above 60, or a closing market order if it's below 50.
+if barstate.isconfirmed
+    switch
+        rsi > 60 => strategy.entry("Long", strategy.long)
+        rsi < 50 => strategy.close_all()
+
+// Plot the RSI and the entry and exit levels on every bar.
+plot(rsi, "RSI")
+hline(60, "Entry level", color.green)
+hline(50, "Exit level", color.red)
+
+// Limit the table logic to the last bar, where the output is visible.
+// Because we use `calc_on_every_tick = true` in the declaration statement, this logic executes on each realtime
+// tick by default, enabling the display to update in real time.
+// Without this argument, the display updates only after a bar closes by default.
+if barstate.islast
+    //@variable References a table that supports two columns and two rows. Displays on the main chart pane by default.
+    var table infoDisplay = table.new(
+        position.top_right, 2, 2, na, chart.fg_color, 1, chart.fg_color, 1, force_overlay = true
+    )
+    // Populate the table's header cells on one bar, because their visuals do not require changes.
+    once
+        infoDisplay.cell(0, 0, "Equity", text_color = #ffffff, bgcolor = #2196f3)
+        infoDisplay.cell(1, 0, "Change", text_color = #ffffff, bgcolor = #2196f3)
+    // Update the other cells that display dynamic values on every subsequent bar.
+    infoDisplay.cell(0, 1, str.tostring(strategy.equity, "0.00"), text_color = chart.fg_color)
+    infoDisplay.cell(1, 1, str.tostring(strategy.equity - strategy.equity[1], "0.00"), text_color = chart.fg_color)
+```

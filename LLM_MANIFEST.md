@@ -22,7 +22,7 @@ Look up exact syntax here before using any built-in. `reference/INDEX.md` lists 
 - `reference/box.md`: **box.* namespace.** 30 functions, 1 variable, e.g. box.all, box(), box.copy(), box.delete(), box.get_bottom(), box.get_left()
 - `reference/chart.md`: **chart.* namespace.** 5 functions, 11 variables, e.g. chart.bg_color, chart.fg_color, chart.is_heikinashi, chart.is_kagi, chart.is_linebreak, chart.is_pnf
 - `reference/color.md`: **color.* namespace.** 8 functions, e.g. color(), color.b(), color.from_gradient(), color.g(), color.new(), color.r()
-- `reference/constants.md`: **Built-in constants (color.*, shape.*, plot.style_*, strategy.*, currency.*, ...).** 239 entries
+- `reference/constants.md`: **Built-in constants (color.*, shape.*, plot.style_*, strategy.*, currency.*, ...).** 241 entries
 - `reference/core.md`: **Core built-ins (indicator, library, alert, alertcondition, na, nz, fixnan, casts, ...).** 12 functions, 1 variable, e.g. na, alert(), alertcondition(), bool(), fixnan(), float()
 - `reference/dividends.md`: **dividends.* namespace.** 3 variables, e.g. dividends.future_amount, dividends.future_ex_date, dividends.future_pay_date
 - `reference/earnings.md`: **earnings.* namespace.** 4 variables, e.g. earnings.future_eps, earnings.future_period_end_time, earnings.future_revenue, earnings.future_time
@@ -40,7 +40,7 @@ Look up exact syntax here before using any built-in. `reference/INDEX.md` lists 
 - `reference/plot.md`: **Plotting functions (plot, plotshape, plotchar, fill, hline, bgcolor, barcolor, ...).** 10 functions, e.g. barcolor(), bgcolor(), fill(), hline(), plot(), plotarrow()
 - `reference/polyline.md`: **polyline.* namespace.** 2 functions, 1 variable, e.g. polyline.all, polyline.delete(), polyline.new()
 - `reference/request.md`: **request.* namespace.** 11 functions, e.g. request.currency_rate(), request.dividends(), request.earnings(), request.economic(), request.financial(), request.footprint()
-- `reference/runtime.md`: **runtime.* namespace.** 1 function, e.g. runtime.error()
+- `reference/runtime.md`: **runtime.* namespace.** 1 function, 1 variable, e.g. runtime.calculation.mode, runtime.error()
 - `reference/session.md`: **session.* namespace.** 7 variables, e.g. session.isfirstbar, session.isfirstbar_regular, session.islastbar, session.islastbar_regular, session.ismarket, session.ispostmarket
 - `reference/str.md`: **str.* namespace.** 18 functions, e.g. str.contains(), str.endswith(), str.format(), str.format_time(), str.length(), str.lower()
 - `reference/strategy.md`: **strategy.* namespace.** 48 functions, 35 variables, e.g. strategy.account_currency, strategy.avg_losing_trade, strategy.avg_losing_trade_percent, strategy.avg_trade, strategy.avg_trade_percent, strategy.avg_winning_trade
@@ -94,7 +94,7 @@ Alerts, bar states, inputs, libraries, other timeframes/data (request.*), repain
 - `concepts/chart_information.md`: **Chart information.** Scripts can retrieve multiple types of information about the current chart and its dataset by using a subset of built-in variables.
 - `concepts/common_errors.md`: **Common error messages.** Legacy parser/compiler messages not covered by errors/ (if statement too long, mismatched input, no viable alternative, too many local variables). Hand-maintained.
 - `concepts/inputs.md`: **Inputs.** Inputs receive values that users can change from a script's “Settings/Inputs” tab.
-- `concepts/libraries.md`: **Libraries.** Pine Script® libraries are publications containing functions that can be reused in indicators, strategies, or in other libraries.
+- `concepts/libraries.md`: **Libraries.** Pine Script® libraries are scripts that *export* reusable functions, methods, user-defined types (UDTs), enums, or constant variables for use in indicators, strategies, or other libraries.
 - `concepts/non_standard_charts_data.md`: **Non-standard charts data.** Pine Script® features several `ticker.*()` functions that generate *ticker identifiers* for requesting data from *non-standard* chart feeds.
 - `concepts/other_timeframes_and_data.md`: **Other timeframes and data.** Pine Script® allows users to request data from sources and contexts other than those their charts use.
 - `concepts/repainting.md`: **Repainting.** We define repainting as: **script behavior causing historical vs realtime calculations or plots to behave differently**.
@@ -117,7 +117,7 @@ Plots, colors, fills, backgrounds, levels, bar plotting/coloring, lines/boxes/po
 - `visuals/lines_and_boxes.md`: **Lines and boxes.** Pine Script® facilitates drawing lines, boxes, and other geometric formations from code using the `line`, `box`, and `polyline` types.
 - `visuals/overview.md`: **Overview.** Well-designed visuals make indicators and strategies easier to use and less cluttered.
 - `visuals/plots.md`: **Plots.** The `plot()` function is the most frequently used function used to display information calculated using Pine scripts.
-- `visuals/tables.md`: **Tables.** Tables are objects that can be used to position information in specific and fixed locations in a script's visual space.
+- `visuals/tables.md`: **Tables.** *Tables* are drawing objects that display text and colors within organized cells.
 - `visuals/text_and_shapes.md`: **Text and shapes.** Pine Script® features five different ways to display text or shapes on the chart:
 
 ## Writing scripts
@@ -156,6 +156,7 @@ Compiler/runtime error and warning codes.
 - `errors/CE10101.md`: **errors/CE10101.md.** This compilation error occurs if one or more of the *conditions* that control the flow of a conditional structure (an `if` or `switch` statement) returns a value that is *not* of the “bool” type.
 - `errors/CE10117.md`: **errors/CE10117.md.** This compilation error indicates that a script’s compiled code is *too large* for the runtime system to execute.
 - `errors/CW10003.md`: **errors/CW10003.md.** This compiler warning occurs if a call to a built-in function or user-defined function (or method) inside a conditional structure or loop retrieves data from its calculations on *past bars* by using t
+- `errors/CW10026.md`: **errors/CW10026.md.** This warning occurs if two or more inputs with the same `inline` and `group` arguments also specify `title` arguments.
 - `errors/overview.md`: **Overview.** Pine Script® uses *runtime errors*, *compilation errors*, and *compiler warnings* to help prevent unintended or erroneous script behaviors:
 - `errors/RE10139.md`: **errors/RE10139.md.** The most common cause of this error is the retrieval of custom objects and collections from `request.*()` functions such as `request.security()`.
 - `errors/RE10143.md`: **errors/RE10143.md.** In Pine Script®, a single script executes from start to end on each bar of the chart.
@@ -165,7 +166,7 @@ Compiler/runtime error and warning codes.
 Converting older scripts; `to_pine_version_6.md` lists every v5 to v6 breaking change.
 
 - `migration_guides/overview.md`: **Overview.** The migration guides catalogue all changes introduced between Pine Script® versions and explain how to rewrite code to convert the indicator successfully.
-- `migration_guides/to_pine_version_2.md`: **To Pine Script® version 2.** Pine Script version 2 is fully backwards compatible with version 1.
+- `migration_guides/to_pine_version_2.md`: **To Pine Script® version 2.** Pine Script version 2 is fully backward-compatible with version 1.
 - `migration_guides/to_pine_version_3.md`: **To Pine Script® version 3.** This document helps to migrate Pine Script code from `@version=2` to `@version=3`.
 - `migration_guides/to_pine_version_4.md`: **To Pine Script® version 4.** This is a guide to converting Pine Script code from `@version=3` to `@version=4`.
 - `migration_guides/to_pine_version_5.md`: **To Pine Script® version 5.** This guide documents the **changes** made to Pine Script from v4 to v5.

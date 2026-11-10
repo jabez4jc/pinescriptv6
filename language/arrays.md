@@ -32,7 +32,7 @@ When declaring an array variable, programmers can use the `array` keyword follow
 
 > **Notice:** It is also possible to specify an array variable’s type by prefixing its declaration with the *element* type keyword, followed by empty *square brackets* (`[]`). For example, a variable whose declaration includes `int[]` as the type keyword accepts the type `array<int>`. However, this *legacy* format is *deprecated*; future versions of Pine Script might not support it. Therefore, we recommend using the `array<type>` format to define type identifiers for consistency.
 
-Specifying a type identifier for a variable or function parameter that holds array references is usually optional. The only exceptions are when initializing an identifier with an [`na` value](type_system.md#na-value), defining exported [library functions](../concepts/libraries.md#library-functions) whose parameters accept array IDs, or declaring [user-defined types](type_system.md#user-defined-types) with fields for storing array IDs. Even when not required, note that specifying an array variable’s type helps promote readability, and it helps the Pine Editor provide relevant code suggestions.
+Specifying a type identifier for a variable or function parameter that holds array references is usually optional. The only exceptions are when initializing an identifier with an [`na` value](type_system.md#na-value), defining exported [library functions](../concepts/libraries.md#user-defined-functions-and-methods) whose parameters accept array IDs, or declaring [user-defined types](type_system.md#user-defined-types) with fields for storing array IDs. Even when not required, note that specifying an array variable’s type helps promote readability, and it helps the Pine Editor provide relevant code suggestions.
 
 The following line of code declares an array variable named `prices` that has an initial reference of `na`. This variable declaration *requires* a type identifier, because the compiler cannot automatically determine the type that `na` represents:
 
@@ -977,7 +977,7 @@ if barstate.islastconfirmedhistory
     //@variable References a shallow copy of the `original` array.
     array<float> copy = array.copy(original)
 
-    //#region
+    //#region --- Modifying the copied array ---
     // The calls in this region modify only the *copied* array. They do not affect the original array,
     // because the `copy` and `original` variables reference separate objects.
     // If we change `copy` to `original` in these calls, they affect only the original array, not the copy.
@@ -1162,7 +1162,7 @@ if barstate.islastconfirmedhistory
     table displayTable = table.new(position.middle_center, 2, 10, border_color = chart.fg_color, border_width = 1)
     displayTable.makeRow(0, "Initial arrays", mainArray, slice)
 
-    //#region
+    //#region --- Modifying the original array ---
     // Any changes that affect the original array's elements at indices 1 through 3 directly affect the
     // contents of the slice.
 
@@ -1181,7 +1181,7 @@ if barstate.islastconfirmedhistory
     displayTable.makeRow(4, "Push 7 new elements into the main array", mainArray, slice)
     //#endregion
 
-    //#region
+    //#region --- Modifying the array slice ---
     // Modifying the contents of the slice directly modifies the original array's elements in the index range
     // covered by the slice.
 

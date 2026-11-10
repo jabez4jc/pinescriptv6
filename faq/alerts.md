@@ -206,10 +206,10 @@ If a script instance raises a *runtime error* at some point during its execution
 
 - Attempting to store more than 100,000 elements within a [collection](../language/type_system.md#collections)
 - Trying to access an item from a collection at an *out-of-bounds* index
-- Referencing historical values of a time series outside its allocated [memory buffer](https://www.tradingview.com/pine-script-docs/error-messages/#the-requested-historical-offset-x-is-beyond-the-historical-buffers-limit-y)
+- Referencing historical values of a time series outside its allocated [memory buffer](../errors/RE10143.md)
 - Using [loops](../language/loops.md) that take longer than 500 ms to complete their iterations
 
-See [this page](https://www.tradingview.com/pine-script-docs/error-messages/) for additional details about common error messages and troubleshooting tips.
+See the [Errors and warnings overview](../errors/overview.md) for additional details about common error messages and troubleshooting tips.
 
 ## Why is my alert firing at the wrong time?
 

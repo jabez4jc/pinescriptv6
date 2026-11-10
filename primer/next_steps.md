@@ -57,7 +57,7 @@ This is how the Pine Script [v6 User Manual](welcome.md) you are reading is orga
 - The [Concepts](https://www.tradingview.com/pine-script-docs/concepts/) section is more task-oriented. It explains how to do things in Pine Script.
 - The [Writing](https://www.tradingview.com/pine-script-docs/writing/) section explores tools and tricks that will help you write and publish scripts.
 - The [FAQ](https://www.tradingview.com/pine-script-docs/faq/) section answers common questions from Pine Script programmers.
-- The [Error messages](https://www.tradingview.com/pine-script-docs/error-messages/) page documents causes and fixes for the most common runtime and compiler errors.
+- The [Errors and warnings](../errors/overview.md) section documents causes and fixes for some of the most common runtime and compiler errors.
 - The [Release Notes](../release_notes.md) page is where you can follow the frequent updates to Pine Script.
 - The [Migration guides](https://www.tradingview.com/pine-script-docs/migration-guides/) section explains how to port between different versions of Pine Script.
 - The [Where can I get more information](where_can_i_get_more_information.md) page lists other useful Pine Script-related content, including where to ask questions when you are stuck on code.

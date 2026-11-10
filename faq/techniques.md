@@ -172,7 +172,7 @@ Scripts can store the number of bars between the current bar and a bar on which 
 
 Programmers can then use the number of bars with the `history-referencing operator []` to retrieve the value of a variable, such as the `close`, on that bar.
 
-Alternatively, if the script needs *only* the value itself and not the number of bars, simply save the value each time the condition occurs. This method is more efficient because it avoids referencing the series multiple times throughout its history. This method also reduces the risk of runtime errors in scripts if the size of the historical reference is [too large](https://www.tradingview.com/pine-script-docs/error-messages/#the-requested-historical-offset-x-is-beyond-the-historical-buffers-limit-y).
+Alternatively, if the script needs *only* the value itself and not the number of bars, simply save the value each time the condition occurs. This method is more efficient because it avoids referencing the series multiple times throughout its history. This method also reduces the risk of runtime errors in scripts if the size of the historical reference is [too large](../errors/RE10143.md).
 
 Here’s a script that demonstrates these methods:
 

@@ -250,6 +250,11 @@ Source: https://www.tradingview.com/pine-script-reference/v6/
 - `position.top_left` (const string): Table position is used in `table.new()`, `table.cell()` functions. Binds the table to the upper-left edge.
 - `position.top_right` (const string): Table position is used in `table.new()`, `table.cell()` functions. Binds the table to the upper-right edge.
 
+## runtime
+
+- `runtime.calculation.mode.alert` (const string): A named constant for use with the `runtime.calculation.mode` variable. Returned when the script is running as part of an alert.
+- `runtime.calculation.mode.chart` (const string): A named constant for use with the `runtime.calculation.mode` variable. Returned when the script is running on a chart.
+
 ## scale
 
 - `scale.left` (const scale_type): A named constant for use as the `scale` argument in `indicator()` and `strategy()` declaration statements. Specifies that the script's price scale is on the left side of the pane. If the script overlays on the main chart pane or another script's pane, it adds a new price scale on the left side of the pane and scales its visuals independently to fit the pane's visual space.

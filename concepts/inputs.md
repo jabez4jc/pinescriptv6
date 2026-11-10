@@ -99,9 +99,9 @@ Note that if multiple input widgets appear on the same line (using `inline`), th
 
 `inline`
 
-Using the same `inline` argument in multiple `input*()` calls displays their input widgets on the *same line* in the “Inputs” tab. The tab’s width limits the amount of input widgets that can fit on one line; longer lines are automatically wrapped. The `inline` string is case-sensitive, so `input*()` calls must use the same characters and letter case in their `inline` arguments to appear in the same line.
+Using the same `inline` argument in multiple `input*()` calls displays their input widgets on the *same line* in the “Inputs” tab. The tab’s width limits the amount of input widgets that can fit on one line; longer lines are automatically wrapped. The `inline` string is case-sensitive, so `input*()` calls must use the same characters and letter case in their `inline` arguments to appear in the same line. Unlike the `group` heading, the `inline` string does not appear in the “Inputs” tab.
 
-Using any `inline` argument, unique or otherwise, displays the input’s field immediately after its label, rather than keeping it left-aligned with other input fields as default. Unlike the `group` heading, the `inline` string does not appear in the “Inputs” tab.
+For consistent input alignment in the “Settings/Inputs” tab, specify a title for only the first input in any one line. For more information, see the page for the warning [The inputs with the ​inline​ argument ​“X”​ might not align correctly in the “Settings/Inputs” tab](../errors/CW10026.md).
 
 `group`
 

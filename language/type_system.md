@@ -333,7 +333,7 @@ Fundamental types and enum types are also known as [value types](#value-types). 
 Programmers can explicitly define the type of a variable, function parameter, or field by prefixing its declaration with a *type keyword* (e.g., `int`) or a *type identifier* (e.g., `array<int>`). Specifying types in code is usually optional, because the compiler can automatically determine type information in most cases. However, type specification is *required* when:
 
 - Declaring [variables](variable_declarations.md), [user-defined function](user_defined_functions.md) parameters, or [UDT](#user-defined-types) fields with initial [`na` values](#na-value).
-- Defining the parameters of exported [library functions](../concepts/libraries.md#library-functions), or declaring exported constants.
+- Defining the parameters of exported [library functions](../concepts/libraries.md#user-defined-functions-and-methods), or declaring exported constants.
 - Using [qualifier keywords](#qualifiers) in a variable or parameter declaration.
 - Declaring the first parameter of a [user-defined method](methods.md#user-defined-methods).
 
@@ -564,7 +564,7 @@ The syntax to declare an enum is as follows:
 
 Where:
 
-- `export` is the optional keyword for exporting the enum from a library, enabling its use in other scripts. See the [Enum types](../concepts/libraries.md#enum-types) section of the [Libraries](../concepts/libraries.md) page to learn more about exporting enums.
+- `export` is the optional keyword for exporting the enum from a library, enabling its use in other scripts. See the [Enums](../concepts/libraries.md#enums) section of the [Libraries](../concepts/libraries.md) page to learn more about exporting enums.
 - `enumName` is the name of the enum type. Scripts can use the enum’s name as the *type keyword* in [variable declarations](variable_declarations.md), parameter and field declarations, and the *type templates* of collections.
 - `field_*` is the name of an enum field. The field represents a *named member* (value) of the `enumName` type. Each field must have a *unique* name that does not match the name or title of any other member in the enum. To retrieve an enum member, use *dot notation* syntax on the enum’s name (e.g., `enumName.field_1`).
 - `title_*` is a “const string” value representing the *title* of an enum member. If the enum declaration does not specify a member’s title, its title is the “string” representation of its name. The `input.enum()` function displays enum member titles within a dropdown input in the “Settings/Inputs” tab. To retrieve the “string” title of an enum member, use the `str.tostring()` function on that member (e.g., `str.tostring(enumName.field_1)`). As with member names, each enum member’s title must be *unique*; it cannot match the name or title of another member in the same enum.
@@ -827,7 +827,7 @@ The syntax to declare a user-defined type is as follows:
 
 Where:
 
-- `export` is the optional keyword for exporting the UDT from a *library*, enabling its use in other scripts. See the [User-defined types and objects](../concepts/libraries.md#user-defined-types-and-objects) section of the [Libraries](../concepts/libraries.md) page to learn more.
+- `export` is the optional keyword for exporting the UDT from a *library*, enabling its use in other scripts. See the [User-defined types](../concepts/libraries.md#user-defined-types) section of the [Libraries](../concepts/libraries.md) page to learn more.
 - `UDT_identifier` is the *name* of the user-defined type.
 - `varip` is an optional keyword that enables the field’s assigned data to *persist* across all ticks within a bar, similar to a [`varip` variable](variable_declarations.md#varip).
 - `field_type` is a type keyword or identifier, which specifies the field’s type.
